@@ -1,0 +1,105 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
+..\..\FrameXML\UI.xsd">
+
+    <Frame name="TotesTheMenuListingTemplate" parentKey="listing" virtual="true" ><!--mixin="TotesTheMenu" scale="0.875"-->
+        <!--Size x="450" y="536"/-->
+        <Frames>
+            <Frame parentKey="ScrollBox" inherits="WowScrollBoxList"><!-- scale="0.875" -->
+                <Anchors>
+                    <Anchor point="TOPLEFT"  x="3" y="-5"/>
+                    <Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
+                </Anchors>
+            </Frame>
+
+            <EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar">
+                <Anchors>
+                    <Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-20" y="-5"/>
+                    <Anchor point="BOTTOMLEFT" relativeKey="$parent" relativePoint="BOTTOMRIGHT" x="-20" y="5"/>
+                </Anchors>
+            </EventFrame>
+        </Frames>
+        <!--Scripts>
+            <OnLoad method="OnLoad"/>
+            <OnShow method="OnShow"/>
+            <OnHide method="OnHide"/>
+            <OnEvent method="OnEvent"/>
+        </Scripts-->
+    </Frame>
+
+    <Button name="TotesMenuRowTemplate"  registerForClicks="RightButtonUp, LeftButtonUp" virtual="true"><!--mixin="TotesTheMenu"-->
+    <Size y="20"/>
+    <Frames>
+        <Button parentKey="SkillUps">
+            <Size x="26" y="15"/>
+            <!-- Dynamically anchored -->
+            <Anchors>
+                <Anchor point="LEFT" x="-9"/>
+            </Anchors>
+            <Layers>
+                <Layer level="OVERLAY">
+                    <Texture parentKey="Icon">
+                        <Anchors>
+                            <Anchor point="RIGHT" x="0" y="-1"/>
+                        </Anchors>
+                    </Texture>
+                    <FontString parentKey="Text" inherits="GameFontHighlight_NoShadow">
+                        <Size x="0" y="13"/>
+                        <Anchors>
+                            <Anchor point="RIGHT" relativeKey="$parent.Icon" relativePoint="LEFT" x="0" y="1"/>
+                        </Anchors>
+                    </FontString>
+                </Layer>
+            </Layers>
+        </Button>
+        <Button parentKey="LockedIcon" hidden="true">
+            <Size x="17" y="16"/>
+            <Layers>
+                <Layer level="OVERLAY">
+                    <Texture file="Interface\LFGFrame\UI-LFG-ICON-LOCK">
+                        <Size x="16" y="16"/>
+                        <Anchors>
+                            <Anchor point="RIGHT" x="0" y="-1"/>
+                        </Anchors>
+                    </Texture>
+                </Layer>
+            </Layers>
+        </Button>
+    </Frames>
+    <Layers>
+        <Layer level="OVERLAY" textureSubLevel="1">
+            <FontString parentKey="Label" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
+                <Size y="12"/>
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent.SkillUps" relativePoint="RIGHT" x="4"/>
+                </Anchors>
+            </FontString>
+            <FontString parentKey="Count" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
+                <Size y="12"/>
+                <Anchors>
+                    <Anchor point="LEFT" relativeKey="$parent.Label" relativePoint="RIGHT"/>
+                </Anchors>
+            </FontString>
+        </Layer>
+        <Layer level="OVERLAY" textureSubLevel="2">
+            <Texture parentKey="SelectedOverlay" atlas="Professions_Recipe_Active" useAtlasSize="true" hidden="true">
+                <Anchors>
+                    <Anchor point="CENTER" x="0" y="-1"/>
+                </Anchors>
+            </Texture>
+        </Layer>
+        <Layer level="HIGHLIGHT">
+            <Texture parentKey="HighlightOverlay" atlas="Professions_Recipe_Hover" useAtlasSize="true" alpha="0.5">
+                <Anchors>
+                    <Anchor point="CENTER" x="0" y="-1"/>
+                </Anchors>
+            </Texture>
+        </Layer>
+    </Layers>
+    <!--Scripts>
+        <OnLoad method="OnLoad"/>
+        <OnEnter method="OnEnter"/>
+        <OnLeave method="OnLeave"/>
+    </Scripts-->
+</Button>
+
+</Ui>
