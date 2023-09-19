@@ -1,6 +1,23 @@
 <Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.blizzard.com/wow/ui/
 ..\..\FrameXML\UI.xsd">
 
+    <Frame name = "TotesTheMenuTemplate"
+        mixin       = "TotesTheMenuController"
+        virtual     = "true"
+        inherits    = "ButtonFrameTemplate"
+        frameStrata = "DIALOG"
+        frameLevel  = "10"
+        parent      = "UIParent"
+        hidden      = "true"
+    >
+        <Size x="200" y="400"/>
+        <Anchors>
+            <Anchor point="BOTTOM" relativeKey="$parent" relativePoint="TOP" />
+        </Anchors>
+
+    </Frame>
+
+
     <Frame name="TotesTheMenuListingTemplate" parentKey="listing" virtual="true" ><!--mixin="TotesTheMenu" scale="0.875"-->
         <!--Size x="450" y="536"/-->
         <Frames>

@@ -1,5 +1,5 @@
 -- TheMenu
--- user defined options and saved vars
+-- controller for the main menu of emotes
 
 -------------------------------------------------------------------------------
 -- Module Loading
@@ -18,7 +18,7 @@ Totes.Wormhole()
 ---@field border table
 ---@type TheMenu|KeyListenerMixin
 TheMenu = { }
-_G["TotesTheMenu"] = TheMenu
+_G["TotesTheMenuController"] = TheMenu
 
 KeyListenerMixin:inject(TheMenu)
 
@@ -44,7 +44,7 @@ function TheMenu:new()
     -- InsetFrameTemplate3 -- lt grey bg - thin grey border
     -- TranslucentFrameTemplate -- dk grey bg  - grey border bolted
     ---@type TheMenu
-    local self = CreateFrame("Frame", ADDON_NAME.."TheMenu", theButton, "ButtonFrameTemplate")
+    local self = CreateFrame("Frame", ADDON_NAME.."TheMenu", theButton, "TotesTheMenuTemplate")
     TheMenu = deepcopy(TheMenu, self)
 
     -- give more recognizable names to Bliz UI elements
@@ -55,9 +55,9 @@ function TheMenu:new()
     self.closeBtn = _G[self:GetName().."CloseButton"]
 
     -- Appearance
-    self:Hide()
-    self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
-    self:SetSize(200, 400)
+    --self:Hide()
+    --self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
+    --self:SetSize(200, 400)
     self:setIcon(2056011)
 
     -- Behavior
