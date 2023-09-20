@@ -5,13 +5,13 @@
            virtual     = "true"
            inherits    = "ButtonFrameBaseTemplate"
            mixin       = "TotesTheMenuController"
-           frameStrata = "DIALOG"
+           useParentLevel="true"
            frameLevel  = "10"
            hidden      = "true"
     >
         <Size x="200" y="400"/>
         <Anchors>
-            <Anchor point="BOTTOM" relativeKey="$parent" relativePoint="TOP" />
+            <Anchor point="BOTTOMRIGHT" relativeKey="$parent" relativePoint="TOPLEFT" x="40" y="-60" />
         </Anchors>
         <Frames>
             <Frame parentKey="listing" inherits="InsetFrameTemplate">
@@ -38,7 +38,6 @@
         </Frames>
     </Frame>
 
-
     <Frame name="TotesTheMenuListingTemplate" parentKey="listing" virtual="true" >
         <Frames>
             <Frame parentKey="ScrollBox" inherits="WowScrollBoxList">
@@ -57,26 +56,27 @@
         </Frames>
     </Frame>
 
-    <Button name="TotesMenuRowTemplate"  registerForClicks="RightButtonUp, LeftButtonUp" virtual="true"><!--mixin="TotesTheMenu"-->
+    <Button name="TotesTemplate_TheMenu_EmoteRow"  registerForClicks="RightButtonUp, LeftButtonUp" virtual="true"><!--mixin="TotesTheMenu"-->
     <Size y="20"/>
     <Frames>
-        <Button parentKey="SkillUps">
-            <Size x="26" y="15"/>
+        <Button parentKey="audioBtn">
+            <Size x="20" y="20"/>
             <!-- Dynamically anchored -->
             <Anchors>
                 <Anchor point="LEFT" x="-9"/>
             </Anchors>
             <Layers>
                 <Layer level="OVERLAY">
-                    <Texture parentKey="Icon">
+                    <Texture parentKey="icon">
+                        <Size x="20" y="20"/>
                         <Anchors>
                             <Anchor point="RIGHT" x="0" y="-1"/>
                         </Anchors>
                     </Texture>
-                    <FontString parentKey="Text" inherits="GameFontHighlight_NoShadow">
+                    <FontString parentKey="text" inherits="GameFontHighlight_NoShadow">
                         <Size x="0" y="13"/>
                         <Anchors>
-                            <Anchor point="RIGHT" relativeKey="$parent.Icon" relativePoint="LEFT" x="0" y="1"/>
+                            <Anchor point="RIGHT" relativeKey="$parent.icon" relativePoint="LEFT" x="0" y="1"/>
                         </Anchors>
                     </FontString>
                 </Layer>
@@ -98,16 +98,16 @@
     </Frames>
     <Layers>
         <Layer level="OVERLAY" textureSubLevel="1">
-            <FontString parentKey="Label" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
+            <FontString parentKey="label" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
                 <Size y="12"/>
                 <Anchors>
-                    <Anchor point="LEFT" relativeKey="$parent.SkillUps" relativePoint="RIGHT" x="4"/>
+                    <Anchor point="LEFT" relativeKey="$parent.audioBtn" relativePoint="RIGHT" x="4"/>
                 </Anchors>
             </FontString>
-            <FontString parentKey="Count" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
+            <FontString parentKey="unused" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
                 <Size y="12"/>
                 <Anchors>
-                    <Anchor point="LEFT" relativeKey="$parent.Label" relativePoint="RIGHT"/>
+                    <Anchor point="LEFT" relativeKey="$parent.label" relativePoint="RIGHT"/>
                 </Anchors>
             </FontString>
         </Layer>
@@ -131,6 +131,69 @@
         <OnEnter method="OnEnter"/>
         <OnLeave method="OnLeave"/>
     </Scripts-->
-</Button>
+    </Button>
+
+    <!--
+       probably will never use as would require swapping out CreateScrollBoxListLinearView with CreateScrollBoxListTreeListView
+       see Blizzard_ProfessionsRecipeList.lua and Blizzard_ProfessionsRecipeList.xml
+     -->
+
+    <Button name="TotesTemplate_TheMenu_CategoryRow" mixin="ProfessionsRecipeListCategoryMixin" virtual="true">
+        <Size y="25"/>
+        <Layers>
+            <Layer level="OVERLAY" textureSubLevel="1">
+                <FontString parentKey="Label" inherits="GameFontNormal_NoShadow" justifyH="LEFT">
+                    <Size y="10"/>
+                    <Anchors>
+                        <Anchor point="LEFT" x="10" y="2"/>
+                    </Anchors>
+                </FontString>
+            </Layer>
+            <Layer level="BACKGROUND">
+                <Texture parentKey="LeftPiece" atlas="Professions-recipe-header-left" useAtlasSize="true">
+                    <Anchors>
+                        <Anchor point="LEFT" y="2"/>
+                    </Anchors>
+                </Texture>
+                <Texture parentKey="RightPiece" atlas="Professions-recipe-header-right" useAtlasSize="true">
+                    <Anchors>
+                        <Anchor point="RIGHT" y="2"/>
+                    </Anchors>
+                </Texture>
+                <Texture parentKey="CenterPiece" atlas="Professions-recipe-header-middle" useAtlasSize="false">
+                    <Anchors>
+                        <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" relativeKey="$parent.LeftPiece"/>
+                        <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" relativeKey="$parent.RightPiece"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="ARTWORK">
+                <Texture parentKey="CollapseIcon">
+                    <Anchors>
+                        <Anchor point="RIGHT" x="-10" y="2"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+            <Layer level="HIGHLIGHT">
+                <Texture parentKey="CollapseIconAlphaAdd" alphaMode="ADD">
+                    <Anchors>
+                        <Anchor point="CENTER" relativeKey="$parent.CollapseIcon"/>
+                    </Anchors>
+                </Texture>
+            </Layer>
+        </Layers>
+        <Frames>
+            <StatusBar parentKey="RankBar" inherits="ProfessionsStatusBarArtTemplate" drawLayer="BACKGROUND" minValue="0" maxValue="1" defaultValue="1">
+                <Anchors>
+                    <Anchor point="RIGHT" relativeKey="$parent.CollapseIcon" relativePoint="LEFT" x="-5" y="0"/>
+                </Anchors>
+            </StatusBar>
+        </Frames>
+        <Scripts>
+            <OnEnter method="OnEnter"/>
+            <OnLeave method="OnLeave"/>
+        </Scripts>
+    </Button>
+
 
 </Ui>

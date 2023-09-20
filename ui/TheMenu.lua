@@ -67,18 +67,37 @@ function TheMenu:new()
     local pad = 0
     local elementSpacing = 4
     local view = CreateScrollBoxListLinearView(pad, pad, pad, pad, elementSpacing)
-    view:SetElementInitializer("TotesMenuRowTemplate", function(button, rowData)
-        -- START callback
-        button.Label:SetText(rowData)
-        -- END callback
-    end)
+    view:SetElementInitializer("TotesTemplate_TheMenu_EmoteRow", TheMenu.formatRow)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.listing.scrollBox, self.listing.scrollBar, view)
 
-    local dataProvider = CreateDataProvider({1,2,3,4,5,6,7,8,9,"Row Ten!",1,2,3,4,5,6,7,8,9,"Row Twenty!!"})
-    self.listing.scrollBox:SetDataProvider(dataProvider)
-    self.listing.scrollBox:SetShown(self.listing.scrollBox:HasScrollableExtent())
-
     return self
+end
+
+---@param emotes table<number, EmoteDefinition|EmoteCat>
+function TheMenu:setEmotes(emotes)
+    if not self.dataProvider then
+        self.dataProvider = CreateDataProvider(emotes)
+    end
+    self.listing.scrollBox:SetDataProvider(self.dataProvider)
+    self.listing.scrollBox:SetShown(self.listing.scrollBox:HasScrollableExtent())
+end
+
+---@param emote EmoteDefinition
+function TheMenu.formatRow(rowBtn, emote)
+    if emote.name == emote.cat then
+        -- this is a category
+        rowBtn.label:SetText("===== "..  EmoteCatName[emote.cat].." =====")
+        zebug.error:line(20, "cat", EmoteCatName[emote.cat])
+    else
+        -- this is an emote
+        rowBtn.label:SetText(emote.name)
+        zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
+        if emote.audio then
+            rowBtn.audioBtn.icon:SetTexture(2056011)
+        else
+            rowBtn.audioBtn.icon:SetTexture(nil)
+        end
+    end
 end
 
 function TheMenu:toggle()

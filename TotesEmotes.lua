@@ -128,10 +128,13 @@ function initalizeAddonStuff()
     DB:initializeOptsMemory()
     Config:initializeOptionsMenu()
 
-    emotesMenu = EmoteDefinitions:makeCategorizedTree()
+    emotesTree = EmoteDefinitions:makeCategorizedTree()
+    emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
+
     emotesNav = EmoteMenuNavigator:new()
 
     theMenu = TheMenu:new()
+    theMenu:setEmotes(emotesList)
 
     -- flags to wait out the chaos happening when the UI first loads / reloads.
     isTotesInitialized = true

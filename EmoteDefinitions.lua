@@ -23,9 +23,9 @@ EmoteCat = {
 }
 
 ---@type table<number,string>
-local emoteCats = {}
+EmoteCatName = {}
 for name, i in pairs(EmoteCat) do
-    emoteCats[i] = name
+    EmoteCatName[i] = name
 end
 
 ---@class EmoteDefinition
@@ -33,6 +33,9 @@ end
 ---@field cat EmoteCat category
 ---@field audio boolean includes audible vocalization
 ---@field viz boolean includes visual animation
+
+---@class EmoteTree
+---@field catGroup table<string,table<string,EmoteDefinition>> -- ex. Happy -> { applaud -> {viz=true, audio=true}, agree -> {} }, Sad -> ... }
 
 -------------------------------------------------------------------------------
 -- Data
@@ -268,6 +271,7 @@ end
 -- each of which further sort the emotes alphabetically but preferring emotes with Audio and/or Viz
 ---@param emotes table<string,EmoteDefinition>
 ---@param catOrder EmoteCat
+---@return EmoteTree
 function EmoteDefinitions:makeCategorizedTree(emotes, catOrder)
     local tree = {} -- emoteNamesSortedIntoCategoryAndThenByNamePlusAV
 
@@ -311,15 +315,39 @@ function EmoteDefinitions:makeCategorizedTree(emotes, catOrder)
     return tree
 end
 
-function EmoteDefinitions:print(emotesMenu)
-    for catIndex, emotes in ipairs(emotesMenu) do
-        zebug.error:line(20, "cat",emoteCats[catIndex])
+---@param emotesTree EmoteTree
+function EmoteDefinitions:print(emotesTree)
+    for catIndex, emotes in ipairs(emotesTree) do
+        zebug.error:line(20, "cat", EmoteCatName[catIndex])
         for i, name in ipairs(emotes) do
             ---@type EmoteDefinition
             local emote = EmoteDefinitions.defaults[name]
-            zebug.warn:print("i",i, "cat", emoteCats[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
+            zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
+        end
+    end
+end
 
+
+-- take the incoming tree list of emotes and
+-- squish it into a flat array while preserving categories & order.
+-- pseudo-flag: a row where name==cat is a category and not an emote
+---@param emotesTree EmoteTree
+---@return table<number, EmoteDefinition>
+function EmoteDefinitions:flattenTreeIntoList(emotesTree)
+    local list = {}
+
+    ---@param emoteCat EmoteCat
+    ---@param emotes table<number,string>
+    for emoteCat, emotes in ipairs(emotesTree) do
+        --zebug.error:line(20, "cat", EmoteCatName[emoteCat])
+        list[#list+1] = { name=emoteCat, cat=emoteCat }
+        for i, name in ipairs(emotes) do
+            ---@type EmoteDefinition
+            local emote = EmoteDefinitions.defaults[name]
+            --zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
+            list[#list+1] = emote
         end
     end
 
+    return list
 end
