@@ -131,7 +131,11 @@ function initalizeAddonStuff()
 
     emotesMenu = EmoteDefinitions:makeCategorizedTree()
     emotesNav = EmoteMenuNavigator:new()
-    theMenu:repairStrata()
+
+    theButton = TheButton:new()
+    theMenu = TheMenu:new()
+
+    --theMenu:repairStrata()
 
     -- flags to wait out the chaos happening when the UI first loads / reloads.
     isTotesInitialized = true

@@ -4,44 +4,67 @@
     <Frame name = "TotesTheMenuTemplate"
         mixin       = "TotesTheMenuController"
         virtual     = "true"
-        inherits    = "ButtonFrameTemplate"
+        inherits    = "ButtonFrameBaseTemplate"
         frameStrata = "DIALOG"
         frameLevel  = "10"
         parent      = "UIParent"
-        hidden      = "true"
+        hidden      = "false"
     >
         <Size x="200" y="400"/>
         <Anchors>
             <Anchor point="BOTTOM" relativeKey="$parent" relativePoint="TOP" />
         </Anchors>
 
-    </Frame>
-
-
-    <Frame name="TotesTheMenuListingTemplate" parentKey="listing" virtual="true" ><!--mixin="TotesTheMenu" scale="0.875"-->
-        <!--Size x="450" y="536"/-->
         <Frames>
-            <Frame parentKey="ScrollBox" inherits="WowScrollBoxList"><!-- scale="0.875" -->
+            <Frame name="$parentListing" parentKey="listing" useParentLevel="true">
+
+
+
+
+
                 <Anchors>
-                    <Anchor point="TOPLEFT"  x="3" y="-5"/>
-                    <Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
+                    <Anchor point="TOPLEFT" x="4" y="-600" />
+                    <Anchor point="BOTTOMRIGHT" x="-6" y="260" />
                 </Anchors>
+                <KeyValues>
+                    <KeyValue key="layoutType" value="InsetFrameTemplate" type="string"/>
+                </KeyValues>
+                <Layers>
+                    <Layer level="BACKGROUND" textureSubLevel="-5">
+                        <!-- TODO: Convert this to atlas -->
+                        <Texture parentKey="Bg" file="Interface\FrameGeneral\UI-Background-Marble" horizTile="true" vertTile="true" setAllPoints="true"/>
+                    </Layer>
+                </Layers>
+                <Frames>
+                    <Frame parentKey="NineSlice" useParentLevel="true" inherits="NineSlicePanelTemplate"/>
+                    <Frame parentKey="ScrollBox" inherits="WowScrollBoxList"><!-- scale="0.875" -->
+                        <Anchors>
+                            <Anchor point="TOPLEFT"  x="3" y="-5"/>
+                            <Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
+                        </Anchors>
+                    </Frame>
+                    <EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar">
+                        <Anchors>
+                            <Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-20" y="-5"/>
+                            <Anchor point="BOTTOMLEFT" relativeKey="$parent" relativePoint="BOTTOMRIGHT" x="-20" y="5"/>
+                        </Anchors>
+                    </EventFrame>
+                </Frames>
+                <!--Scripts>
+                    <OnLoad method="OnLoad"/>
+                    <OnShow method="OnShow"/>
+                    <OnHide method="OnHide"/>
+                    <OnEvent method="OnEvent"/>
+                </Scripts-->
+
+
+
             </Frame>
 
-            <EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar">
-                <Anchors>
-                    <Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-20" y="-5"/>
-                    <Anchor point="BOTTOMLEFT" relativeKey="$parent" relativePoint="BOTTOMRIGHT" x="-20" y="5"/>
-                </Anchors>
-            </EventFrame>
         </Frames>
-        <!--Scripts>
-            <OnLoad method="OnLoad"/>
-            <OnShow method="OnShow"/>
-            <OnHide method="OnHide"/>
-            <OnEvent method="OnEvent"/>
-        </Scripts-->
     </Frame>
+
+
 
     <Button name="TotesMenuRowTemplate"  registerForClicks="RightButtonUp, LeftButtonUp" virtual="true"><!--mixin="TotesTheMenu"-->
     <Size y="20"/>

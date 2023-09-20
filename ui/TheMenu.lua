@@ -51,12 +51,12 @@ function TheMenu:new()
     self.icon     = self.PortraitContainer
     self.titleBar = self.TitleContainer
     self.border   = self.NineSlice
-    self.inset    = _G[self:GetName().."Inset"]
+    --self.inset    = _G[self:GetName().."Inset"]
     self.closeBtn = _G[self:GetName().."CloseButton"]
 
     -- Appearance
     --self:Hide()
-    --self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
+    self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
     --self:SetSize(200, 400)
     self:setIcon(2056011)
 
@@ -67,9 +67,10 @@ function TheMenu:new()
     self:startKeyListener("onlyOnMouseOver")
 
     -- scroll area
-    local theMenuListing = CreateFrame("Frame", nil --[[ADDON_NAME.."TheMenuListing"]], TheMenu.inset, "TotesTheMenuListingTemplate")
+    --local theMenuListing = CreateFrame("Frame", nil --[[ADDON_NAME.."TheMenuListing"]], TheMenu.inset, "TotesTheMenuListingTemplate")
+    local theMenuListing = TheMenu.listing
 
-    local topPadding, bottomPadding, leftPadding, rightPadding = 5, 10, 0, 0;
+    local topPadding, bottomPadding, leftPadding, rightPadding = 0, 0, 0, 0;
     local elementSpacing = 4;
     local view = CreateScrollBoxListLinearView(topPadding, bottomPadding, leftPadding, rightPadding, elementSpacing);
     view:SetElementInitializer("TotesMenuRowTemplate", function(button, rowData)
