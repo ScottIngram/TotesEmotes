@@ -51,13 +51,10 @@ function TheMenu:new()
     self.icon     = self.PortraitContainer
     self.titleBar = self.TitleContainer
     self.border   = self.NineSlice
-    --self.inset    = _G[self:GetName().."Inset"]
     self.closeBtn = _G[self:GetName().."CloseButton"]
 
     -- Appearance
-    --self:Hide()
     self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
-    --self:SetSize(200, 400)
     self:setIcon(2056011)
 
     -- Behavior
@@ -67,29 +64,19 @@ function TheMenu:new()
     self:startKeyListener("onlyOnMouseOver")
 
     -- scroll area
-    --local theMenuListing = CreateFrame("Frame", nil --[[ADDON_NAME.."TheMenuListing"]], TheMenu.inset, "TotesTheMenuListingTemplate")
-    local theMenuListing = TheMenu.listing
-
-    local topPadding, bottomPadding, leftPadding, rightPadding = 0, 0, 0, 0;
-    local elementSpacing = 4;
-    local view = CreateScrollBoxListLinearView(topPadding, bottomPadding, leftPadding, rightPadding, elementSpacing);
+    local pad = 0
+    local elementSpacing = 4
+    local view = CreateScrollBoxListLinearView(pad, pad, pad, pad, elementSpacing)
     view:SetElementInitializer("TotesMenuRowTemplate", function(button, rowData)
         -- START callback
         button.Label:SetText(rowData)
         -- END callback
     end)
+    ScrollUtil.InitScrollBoxListWithScrollBar(self.listing.scrollBox, self.listing.scrollBar, view)
 
-    ScrollUtil.InitScrollBoxListWithScrollBar(theMenuListing.ScrollBox, theMenuListing.ScrollBar, view);
-
-    local dataProvider = CreateDataProvider({1,2,3,4,5,6,7,8,9,"Row Ten!",1,2,3,4,5,6,7,8,9,"Row Twenty!!"});
-    theMenuListing.ScrollBox:SetDataProvider(dataProvider);
-    theMenuListing.ScrollBar:SetShown(theMenuListing.ScrollBox:HasScrollableExtent());
-
-    theMenuListing:SetAllPoints() --TheMenu.inset
-    theMenuListing:Show()
-    theMenuListing.ScrollBox:Show()
-    theMenuListing.ScrollBar:Show()
-
+    local dataProvider = CreateDataProvider({1,2,3,4,5,6,7,8,9,"Row Ten!",1,2,3,4,5,6,7,8,9,"Row Twenty!!"})
+    self.listing.scrollBox:SetDataProvider(dataProvider)
+    self.listing.scrollBox:SetShown(self.listing.scrollBox:HasScrollableExtent())
 
     return self
 end

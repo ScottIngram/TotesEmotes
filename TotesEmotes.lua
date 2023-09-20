@@ -51,7 +51,6 @@ function AddonLoadedHandlers:TotesEmotes()
     -- before PLAYER_LOGIN is automatically restored by the client from the layout cache when the player logs in.
     zebug.trace:print("Heard event: ADDON_LOADED --> TotesEmotes")
     theButton = TheButton:new()
-    theMenu = TheMenu:new()
 end
 
 -------------------------------------------------------------------------------
@@ -132,10 +131,7 @@ function initalizeAddonStuff()
     emotesMenu = EmoteDefinitions:makeCategorizedTree()
     emotesNav = EmoteMenuNavigator:new()
 
-    theButton = TheButton:new()
     theMenu = TheMenu:new()
-
-    --theMenu:repairStrata()
 
     -- flags to wait out the chaos happening when the UI first loads / reloads.
     isTotesInitialized = true
