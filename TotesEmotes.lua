@@ -29,14 +29,14 @@ local hasShitCalmedTheFuckDown = false
 local EventHandlers = { }
 
 function EventHandlers:PLAYER_LOGIN()
-    zebug.trace:print("Heard event: PLAYER_LOGIN")
+    zebug.trace:name("EventHandlers:PLAYER_LOGIN"):print("handling")
     local version = C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version")
     local msg = L10N.LOADED .. " v"..version
     msgUser(msg)
 end
 
 function EventHandlers:PLAYER_ENTERING_WORLD(isInitialLogin, isReloadingUi)
-    zebug.trace:print("Heard event: PLAYER_ENTERING_WORLD", "isInitialLogin",isInitialLogin, "isReloadingUi",isReloadingUi)
+    zebug.trace:name("EventHandlers:PLAYER_LOGIN"):print("isInitialLogin",isInitialLogin, "isReloadingUi",isReloadingUi)
     initalizeAddonStuff()
 end
 
@@ -131,10 +131,15 @@ function initalizeAddonStuff()
     emotesTree = EmoteDefinitions:makeCategorizedTree()
     emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
 
-    emotesNav = EmoteMenuNavigator:new()
+    emotesNav = EmoteMenuNavigator:new(emotesTree)
 
     theMenu = TheMenu:new()
     theMenu:setEmotes(emotesList)
+
+    theMenu:setNavSubscriptions(emotesNav)
+    theButton:setNavSubscriptions(emotesNav)
+
+    emotesNav:goTop("addon initialization")
 
     -- flags to wait out the chaos happening when the UI first loads / reloads.
     isTotesInitialized = true

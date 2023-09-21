@@ -9,7 +9,7 @@
            frameLevel  = "10"
            hidden      = "true"
     >
-        <Size x="200" y="400"/>
+        <Size x="200" y="600"/>
         <Anchors>
             <Anchor point="BOTTOMRIGHT" relativeKey="$parent" relativePoint="TOPLEFT" x="40" y="-60" />
         </Anchors>
@@ -36,34 +36,22 @@
                 </Frames>
             </Frame>
         </Frames>
+        <Scripts>
+            <OnLoad method="OnLoad"/>
+        </Scripts>
     </Frame>
 
-    <Frame name="TotesTheMenuListingTemplate" parentKey="listing" virtual="true" >
-        <Frames>
-            <Frame parentKey="ScrollBox" inherits="WowScrollBoxList">
-                <Anchors>
-                    <Anchor point="TOPLEFT"  x="3" y="-5"/>
-                    <Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
-                </Anchors>
-            </Frame>
-
-            <EventFrame parentKey="ScrollBar" inherits="MinimalScrollBar">
-                <Anchors>
-                    <Anchor point="TOPLEFT" relativeKey="$parent" relativePoint="TOPRIGHT" x="-20" y="-5"/>
-                    <Anchor point="BOTTOMLEFT" relativeKey="$parent" relativePoint="BOTTOMRIGHT" x="-20" y="5"/>
-                </Anchors>
-            </EventFrame>
-        </Frames>
-    </Frame>
-
-    <Button name="TotesTemplate_TheMenu_EmoteRow"  registerForClicks="RightButtonUp, LeftButtonUp" virtual="true"><!--mixin="TotesTheMenu"-->
+    <Button name = "TotesTemplate_TheMenu_EmoteRow"
+            virtual = "true"
+            mixin   = "TotesTheMenuRowController"
+            registerForClicks = "RightButtonUp, LeftButtonUp"
+    >
     <Size y="20"/>
     <Frames>
         <Button parentKey="audioBtn">
             <Size x="20" y="20"/>
-            <!-- Dynamically anchored -->
             <Anchors>
-                <Anchor point="LEFT" x="-9"/>
+                <Anchor point="LEFT" x="0"/>
             </Anchors>
             <Layers>
                 <Layer level="OVERLAY">
@@ -82,16 +70,25 @@
                 </Layer>
             </Layers>
         </Button>
-        <Button parentKey="LockedIcon" hidden="true">
-            <Size x="17" y="16"/>
+        <Button parentKey="vizBtn">
+            <Size x="20" y="20"/>
+            <Anchors>
+                <Anchor point="LEFT" relativeKey="$parent.audioBtn" relativePoint="RIGHT" x="4"/>
+            </Anchors>
             <Layers>
                 <Layer level="OVERLAY">
-                    <Texture file="Interface\LFGFrame\UI-LFG-ICON-LOCK">
-                        <Size x="16" y="16"/>
+                    <Texture parentKey="icon">
+                        <Size x="20" y="20"/>
                         <Anchors>
                             <Anchor point="RIGHT" x="0" y="-1"/>
                         </Anchors>
                     </Texture>
+                    <FontString parentKey="text" inherits="GameFontHighlight_NoShadow">
+                        <Size x="0" y="13"/>
+                        <Anchors>
+                            <Anchor point="RIGHT" relativeKey="$parent.icon" relativePoint="LEFT" x="0" y="1"/>
+                        </Anchors>
+                    </FontString>
                 </Layer>
             </Layers>
         </Button>
@@ -101,7 +98,7 @@
             <FontString parentKey="label" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
                 <Size y="12"/>
                 <Anchors>
-                    <Anchor point="LEFT" relativeKey="$parent.audioBtn" relativePoint="RIGHT" x="4"/>
+                    <Anchor point="LEFT" relativeKey="$parent.vizBtn" relativePoint="RIGHT" x="4"/>
                 </Anchors>
             </FontString>
             <FontString parentKey="unused" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
@@ -126,74 +123,10 @@
             </Texture>
         </Layer>
     </Layers>
-    <!--Scripts>
-        <OnLoad method="OnLoad"/>
-        <OnEnter method="OnEnter"/>
-        <OnLeave method="OnLeave"/>
-    </Scripts-->
+    <Scripts>
+        <OnClick method="OnLoad"/>
+        <OnClick method="OnClick"/>
+    </Scripts>
     </Button>
-
-    <!--
-       probably will never use as would require swapping out CreateScrollBoxListLinearView with CreateScrollBoxListTreeListView
-       see Blizzard_ProfessionsRecipeList.lua and Blizzard_ProfessionsRecipeList.xml
-     -->
-
-    <Button name="TotesTemplate_TheMenu_CategoryRow" mixin="ProfessionsRecipeListCategoryMixin" virtual="true">
-        <Size y="25"/>
-        <Layers>
-            <Layer level="OVERLAY" textureSubLevel="1">
-                <FontString parentKey="Label" inherits="GameFontNormal_NoShadow" justifyH="LEFT">
-                    <Size y="10"/>
-                    <Anchors>
-                        <Anchor point="LEFT" x="10" y="2"/>
-                    </Anchors>
-                </FontString>
-            </Layer>
-            <Layer level="BACKGROUND">
-                <Texture parentKey="LeftPiece" atlas="Professions-recipe-header-left" useAtlasSize="true">
-                    <Anchors>
-                        <Anchor point="LEFT" y="2"/>
-                    </Anchors>
-                </Texture>
-                <Texture parentKey="RightPiece" atlas="Professions-recipe-header-right" useAtlasSize="true">
-                    <Anchors>
-                        <Anchor point="RIGHT" y="2"/>
-                    </Anchors>
-                </Texture>
-                <Texture parentKey="CenterPiece" atlas="Professions-recipe-header-middle" useAtlasSize="false">
-                    <Anchors>
-                        <Anchor point="TOPLEFT" relativePoint="TOPRIGHT" relativeKey="$parent.LeftPiece"/>
-                        <Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMLEFT" relativeKey="$parent.RightPiece"/>
-                    </Anchors>
-                </Texture>
-            </Layer>
-            <Layer level="ARTWORK">
-                <Texture parentKey="CollapseIcon">
-                    <Anchors>
-                        <Anchor point="RIGHT" x="-10" y="2"/>
-                    </Anchors>
-                </Texture>
-            </Layer>
-            <Layer level="HIGHLIGHT">
-                <Texture parentKey="CollapseIconAlphaAdd" alphaMode="ADD">
-                    <Anchors>
-                        <Anchor point="CENTER" relativeKey="$parent.CollapseIcon"/>
-                    </Anchors>
-                </Texture>
-            </Layer>
-        </Layers>
-        <Frames>
-            <StatusBar parentKey="RankBar" inherits="ProfessionsStatusBarArtTemplate" drawLayer="BACKGROUND" minValue="0" maxValue="1" defaultValue="1">
-                <Anchors>
-                    <Anchor point="RIGHT" relativeKey="$parent.CollapseIcon" relativePoint="LEFT" x="-5" y="0"/>
-                </Anchors>
-            </StatusBar>
-        </Frames>
-        <Scripts>
-            <OnEnter method="OnEnter"/>
-            <OnLeave method="OnLeave"/>
-        </Scripts>
-    </Button>
-
 
 </Ui>

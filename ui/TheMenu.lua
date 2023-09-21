@@ -10,6 +10,8 @@ local ADDON_NAME, Totes = ...
 Totes.Wormhole()
 
 ---@class TheMenu
+---@field className string "TheMenu"
+---@field nav EmoteMenuNavigator
 ---@field isDragging boolean
 ---@field titleBar table
 ---@field icon table
@@ -17,8 +19,15 @@ Totes.Wormhole()
 ---@field inset table
 ---@field border table
 ---@type TheMenu|KeyListenerMixin
-TheMenu = { }
-_G["TotesTheMenuController"] = TheMenu
+TheMenu = { className = "TheMenu", }
+_G["TotesTheMenuController"] = TheMenu -- export for use by the XML
+
+---@class MenuRowController
+---@field className string
+---@field emote EmoteDefinition
+---@field nav EmoteMenuNavigator
+MenuRowController = { className = "MenuRowController" }
+_G["TotesTheMenuRowController"] = MenuRowController -- export for use by the XML which will create a new instance of MenuRowController
 
 KeyListenerMixin:inject(TheMenu)
 
@@ -55,7 +64,7 @@ function TheMenu:new()
 
     -- Appearance
     self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
-    self:setIcon(2056011)
+    self:setIcon(132351)-- 2056011
 
     -- Behavior
     self:SetScript("OnMouseDown", TheMenu.onMouseDown)
@@ -65,39 +74,25 @@ function TheMenu:new()
 
     -- scroll area
     local pad = 0
-    local elementSpacing = 4
-    local view = CreateScrollBoxListLinearView(pad, pad, pad, pad, elementSpacing)
-    view:SetElementInitializer("TotesTemplate_TheMenu_EmoteRow", TheMenu.formatRow)
+    local elementSpacing = 2
+    local view = CreateScrollBoxListLinearView(pad, pad, 5, pad, elementSpacing)
+    view:SetElementInitializer("TotesTemplate_TheMenu_EmoteRow", function(rowBtn, rowData)
+        -- START callback
+        self:initializeRowBtn(rowBtn, rowData)
+        -- END callback
+    end)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.listing.scrollBox, self.listing.scrollBar, view)
 
     return self
 end
 
----@param emotes table<number, EmoteDefinition|EmoteCat>
+---@param emotes table<number, EmoteDefinition>
 function TheMenu:setEmotes(emotes)
     if not self.dataProvider then
         self.dataProvider = CreateDataProvider(emotes)
     end
     self.listing.scrollBox:SetDataProvider(self.dataProvider)
     self.listing.scrollBox:SetShown(self.listing.scrollBox:HasScrollableExtent())
-end
-
----@param emote EmoteDefinition
-function TheMenu.formatRow(rowBtn, emote)
-    if emote.name == emote.cat then
-        -- this is a category
-        rowBtn.label:SetText("===== "..  EmoteCatName[emote.cat].." =====")
-        zebug.error:line(20, "cat", EmoteCatName[emote.cat])
-    else
-        -- this is an emote
-        rowBtn.label:SetText(emote.name)
-        zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
-        if emote.audio then
-            rowBtn.audioBtn.icon:SetTexture(2056011)
-        else
-            rowBtn.audioBtn.icon:SetTexture(nil)
-        end
-    end
 end
 
 function TheMenu:toggle()
@@ -162,3 +157,93 @@ function TheMenu:handleKeyPress(key)
     zebug.info:print("key",key)
     return true
 end
+
+---@param rowBtn MenuRowController
+---@param emote EmoteDefinition
+function TheMenu:initializeRowBtn(rowBtn, emote)
+    if not rowBtn.getMenu then
+        rowBtn.getMenu = function() return self end
+    end
+    rowBtn:formatRow(emote)
+end
+
+-------------------------------------------------------------------------------
+-- XML Event handlers
+-------------------------------------------------------------------------------
+
+function TheMenu:OnLoad(self)
+    -- this doesn't appear to be called
+    zebug.error:line(20,"xml self",self, "TheMenu",TheMenu, "theMenu",theMenu)
+end
+
+-------------------------------------------------------------------------------
+-- EmoteMenuNavigator Event handlers
+-------------------------------------------------------------------------------
+
+---@param navigator EmoteMenuNavigator
+function TheMenu:setNavSubscriptions(navigator)
+    self.nav = navigator
+    navigator:subscribe(EmoteMenuEvent.GoNode, self.handleGoNode, self.className)
+    navigator:subscribe(EmoteMenuEvent.Execute, self.handleExecute, self.className)
+end
+
+function TheMenu:handleGoNode(event, msg, node)
+    zebug.info:name("handleGoNode"):print("event",event, "msg",msg, "node",node)
+    -- TODO: refresh the display
+end
+
+function TheMenu:handleExecute(event, msg, node)
+    -- Prolly not going to do anything here... I don't want to auto close the menu, do I?  Not really.
+
+    zebug.info:name("handleExecute"):print("event",event, "msg",msg, "node",node)
+    local id = self.emote.fix or self.emote.name
+    zebug.error:print("name", self.emote.name, "fix", self.emote.fix)
+    DoEmote(id);
+end
+
+-------------------------------------------------------------------------------
+-- RowController
+-------------------------------------------------------------------------------
+
+---@param emote EmoteDefinition
+function MenuRowController:formatRow(emote)
+    self.emote = emote
+    if emote.name == emote.cat then
+        -- this is a category
+        self.label:SetText("===== "..  EmoteCatName[emote.cat].." =====")
+        --zebug.error:line(20, "cat", EmoteCatName[emote.cat])
+    else
+        -- this is an emote
+        self.label:SetText(emote.name)
+        --zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
+        if emote.audio then
+            self.audioBtn.icon:SetTexture(2056011)
+        else
+            self.audioBtn.icon:SetTexture(nil)
+        end
+        if emote.viz then
+            self.vizBtn.icon:SetTexture(538536)
+        else
+            self.vizBtn.icon:SetTexture(nil)
+        end
+    end
+end
+
+-------------------------------------------------------------------------------
+-- XML Event handlers
+-------------------------------------------------------------------------------
+
+function MenuRowController:OnLoad(...)
+    -- this doesn't appear to be called
+    zebug.info:print("OnLoad args", ...)
+end
+
+---@param mouseClick MouseClick
+function MenuRowController:OnClick(mouseClick, isDown)
+    zebug.trace:print("emote",self.emote.name, "mouseClick",mouseClick, "isDown",isDown)
+    -- TODO trigger event instead
+    EmoteDefinitions:doEmote(self.emote)
+    --self.nav
+end
+
+

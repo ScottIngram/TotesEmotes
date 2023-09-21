@@ -10,9 +10,11 @@ local ADDON_NAME, Totes = ...
 Totes.Wormhole()
 
 ---@class TheButton
+---@field className string "TheMenu"
+---@field nav EmoteMenuNavigator
 ---@field isDragging boolean
 ---@type TheButton|KeyListenerMixin
-TheButton = { }
+TheButton = { className = "TheButton", }
 KeyListenerMixin:inject(TheButton)
 
 -------------------------------------------------------------------------------
@@ -85,7 +87,6 @@ function TheButton:activateDrag()
     zebug.trace:print("onMouseDown", mouseClick)
 end
 
-
 ---@param mouseClick MouseClick
 function TheButton:onMouseUp(mouseClick)
     if mouseClick == MouseClick.LEFT then
@@ -105,3 +106,20 @@ function TheButton:handleKeyPress(key)
     zebug.info:print("key",key)
     return true
 end
+
+-------------------------------------------------------------------------------
+-- EmoteMenuNavigator Event handlers
+-------------------------------------------------------------------------------
+
+---@param navigator EmoteMenuNavigator
+function TheButton:setNavSubscriptions(navigator)
+    self.nav = navigator
+    navigator:subscribe(EmoteMenuEvent.GoNode, self.handleGoNode, self.className)
+end
+
+function TheButton:handleGoNode(event, msg, node)
+    zebug.info:name("handleGoNode"):print("event",event, "msg",msg, "node",node)
+    -- TODO: refresh the display
+end
+
+
