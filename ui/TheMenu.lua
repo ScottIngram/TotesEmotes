@@ -11,7 +11,7 @@ Totes.Wormhole()
 
 ---@class TheMenu
 ---@field className string "TheMenu"
----@field nav EmoteMenuNavigator
+---@field nav Navigator
 ---@field isDragging boolean
 ---@field titleBar table
 ---@field icon table
@@ -20,18 +20,15 @@ Totes.Wormhole()
 ---@field border table
 ---@type TheMenu|KeyListenerMixin
 TheMenu = { className = "TheMenu", }
+KeyListenerMixin:inject(TheMenu)
 _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
 
 ---@class MenuRowController
 ---@field className string
 ---@field emote EmoteDefinition
----@field nav EmoteMenuNavigator
+---@field nav Navigator
 MenuRowController = { className = "MenuRowController" }
 _G["TotesTheMenuRowController"] = MenuRowController -- export for use by the XML which will create a new instance of MenuRowController
-
-KeyListenerMixin:inject(TheMenu)
-
-ScrollBoxListLinearViewMixin = CreateFromMixins(ScrollBoxListViewMixin, ScrollBoxLinearBaseViewMixin);
 
 -------------------------------------------------------------------------------
 -- Data
@@ -111,12 +108,47 @@ end
 
 function TheMenu:repairStrata()
     -- must do this here instead of new() because Bliz borks these values on PLAYER_LOGIN
+    -- NOT USED - moving everything into the XML seems to have solved the problem
     local level = theButton:GetFrameLevel()
     self:SetFrameStrata( theButton:GetFrameStrata() )
     self:SetFrameLevel( level - 3 )
     self.icon:SetFrameLevel( level - 2  )
     self.border:SetFrameLevel( level - 1  ) -- the frame goes over the icon
 end
+
+function TheMenu:activateDrag()
+    -- pay attention to how far the button is dragged so we cam choose to handleClick or not -- currently unused
+    if mouseClick == MouseClick.LEFT then
+        self.mouseX, self.mouseY = GetCursorPosition()
+        self.isDragging = true
+        self:StartMoving()
+    end
+    zebug.trace:print("onMouseDown", mouseClick)
+end
+
+---@param rowBtn MenuRowController
+---@param emote EmoteDefinition
+function TheMenu:initializeRowBtn(rowBtn, emote)
+    if not rowBtn.getMenu then
+        rowBtn.getMenu = function() return self end
+        rowBtn.nav = function() return self.nav end
+    end
+    rowBtn:formatRow(emote)
+end
+
+-------------------------------------------------------------------------------
+-- KetListener Event handlers
+-------------------------------------------------------------------------------
+
+---@return boolean true if consumed: stop propagation!
+function TheMenu:handleKeyPress(key)
+    zebug.info:print("key",key)
+    return true
+end
+
+-------------------------------------------------------------------------------
+-- Widget Event handlers
+-------------------------------------------------------------------------------
 
 ---@param mouseClick MouseClick
 function TheMenu:onMouseDown(mouseClick)
@@ -126,16 +158,6 @@ function TheMenu:onMouseDown(mouseClick)
     end
     zebug.trace:print("onMouseDown", mouseClick)
 end
-
-function TheMenu:activateDrag()
-    if mouseClick == MouseClick.LEFT then
-        self.mouseX, self.mouseY = GetCursorPosition()
-        self.isDragging = true
-        self:StartMoving()
-    end
-    zebug.trace:print("onMouseDown", mouseClick)
-end
-
 
 ---@param mouseClick MouseClick
 function TheMenu:onMouseUp(mouseClick)
@@ -147,58 +169,34 @@ function TheMenu:onMouseUp(mouseClick)
     zebug.trace:print("onMouseUp", mouseClick)
 end
 
-function foo()
-    self.mouseX, self.mouseY = GetCursorPosition()
-
-end
-
----@return boolean true if consumed: stop propagation!
-function TheMenu:handleKeyPress(key)
-    zebug.info:print("key",key)
-    return true
-end
-
----@param rowBtn MenuRowController
----@param emote EmoteDefinition
-function TheMenu:initializeRowBtn(rowBtn, emote)
-    if not rowBtn.getMenu then
-        rowBtn.getMenu = function() return self end
-    end
-    rowBtn:formatRow(emote)
-end
-
 -------------------------------------------------------------------------------
 -- XML Event handlers
 -------------------------------------------------------------------------------
 
-function TheMenu:OnLoad(self)
+function TheMenu:OnLoad(zelf)
     -- this doesn't appear to be called
-    zebug.error:line(20,"xml self",self, "TheMenu",TheMenu, "theMenu",theMenu)
+    zebug.error:line(20,"self",self, "xml zelf", zelf, "TheMenu",TheMenu, "theMenu",theMenu)
 end
 
 -------------------------------------------------------------------------------
--- EmoteMenuNavigator Event handlers
+-- Navigator Event handlers
 -------------------------------------------------------------------------------
 
----@param navigator EmoteMenuNavigator
-function TheMenu:setNavSubscriptions(navigator)
-    self.nav = navigator
-    navigator:subscribe(EmoteMenuEvent.GoNode, self.handleGoNode, self.className)
-    navigator:subscribe(EmoteMenuEvent.Execute, self.handleExecute, self.className)
+---@param nav Navigator
+function TheMenu:setNavSubscriptions(nav)
+    self.nav = nav
+    nav:subscribe(NavEvent.GoNode, TheMenu_handleGoNode, self.className)
+    nav:subscribe(NavEvent.OnEmote, TheMenu_handleOnEmote, self.className)
 end
 
-function TheMenu:handleGoNode(event, msg, node)
+function TheMenu_handleGoNode(event, msg, node)
     zebug.info:name("handleGoNode"):print("event",event, "msg",msg, "node",node)
     -- TODO: refresh the display
 end
 
-function TheMenu:handleExecute(event, msg, node)
+function TheMenu_handleOnEmote(msg, node)
     -- Prolly not going to do anything here... I don't want to auto close the menu, do I?  Not really.
-
-    zebug.info:name("handleExecute"):print("event",event, "msg",msg, "node",node)
-    local id = self.emote.fix or self.emote.name
-    zebug.error:print("name", self.emote.name, "fix", self.emote.fix)
-    DoEmote(id);
+    zebug.info:name("handleDoEmote"):print("self",self, "Heard msg",msg, "node",node)
 end
 
 -------------------------------------------------------------------------------
@@ -241,9 +239,8 @@ end
 ---@param mouseClick MouseClick
 function MenuRowController:OnClick(mouseClick, isDown)
     zebug.trace:print("emote",self.emote.name, "mouseClick",mouseClick, "isDown",isDown)
-    -- TODO trigger event instead
     EmoteDefinitions:doEmote(self.emote)
-    --self.nav
+    nav:notifySubs(NavEvent.OnEmote, "MenuRowController:OnClick", self.emote)
 end
 
 

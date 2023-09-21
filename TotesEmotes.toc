@@ -28,7 +28,7 @@ ui\KeyListenerMixin.lua
 ui\TheButton.lua
 ui\TheMenu.lua
 ui\TheMenu.xml
-ui\EmoteMenuNavigator.lua
+ui\Navigator.lua
 
 TotesEmotes.lua
 

@@ -11,7 +11,7 @@ Totes.Wormhole()
 
 ---@class TheButton
 ---@field className string "TheMenu"
----@field nav EmoteMenuNavigator
+---@field nav Navigator
 ---@field isDragging boolean
 ---@type TheButton|KeyListenerMixin
 TheButton = { className = "TheButton", }
@@ -108,16 +108,16 @@ function TheButton:handleKeyPress(key)
 end
 
 -------------------------------------------------------------------------------
--- EmoteMenuNavigator Event handlers
+-- Navigator Event handlers
 -------------------------------------------------------------------------------
 
----@param navigator EmoteMenuNavigator
+---@param navigator Navigator
 function TheButton:setNavSubscriptions(navigator)
     self.nav = navigator
-    navigator:subscribe(EmoteMenuEvent.GoNode, self.handleGoNode, self.className)
+    navigator:subscribe(NavEvent.GoNode, TheButton_handleGoNode, self.className)
 end
 
-function TheButton:handleGoNode(event, msg, node)
+function TheButton_handleGoNode(event, msg, node)
     zebug.info:name("handleGoNode"):print("event",event, "msg",msg, "node",node)
     -- TODO: refresh the display
 end
