@@ -94,10 +94,17 @@ end
 
 ---@param emotes table<number, EmoteDefinition>
 function TheMenu:setEmotes(emotes)
-    if not self.dataProvider then
+    if true --[[enable for now]] and self.dataProvider then
+        -- Ok, this DOES work now.  -- none of this seems to trigger a refresh... yay complete lack of documentation
+        self.dataProvider:Init(emotes)
+        --self.dataProvider:Flush()
+        self.dataProvider:TriggerEvent(DataProviderMixin.Event.OnSizeChanged, false);
+        --self.listing.scrollBox:SetDataProvider(self.dataProvider)
+        self.listing.scrollBox:OnViewDataChanged()
+    else
         self.dataProvider = CreateDataProvider(emotes)
+        self.listing.scrollBox:SetDataProvider(self.dataProvider)
     end
-    self.listing.scrollBox:SetDataProvider(self.dataProvider)
 end
 
 function TheMenu:toggle()
@@ -139,7 +146,7 @@ end
 function TheMenu:initializeRowBtn(rowBtn, emote)
     if not rowBtn.getMenu then
         rowBtn.getMenu = function() return self end
-        rowBtn.nav = function() return self.nav end
+        rowBtn.nav = self.nav
     end
     rowBtn:formatRow(emote)
 end
@@ -151,6 +158,9 @@ end
 ---@return boolean true if consumed: stop propagation!
 function TheMenu:handleKeyPress(key)
     zebug.info:print("key",key)
+    if key == "ESCAPE" then
+        self.nav:goUp()
+    end
     return true
 end
 
@@ -199,6 +209,7 @@ end
 
 function TheMenu:handleGoNode(msg, node)
     zebug.info:name("handleGoNode"):print("msg",msg, "node",node)
+    --zebug.info:dumpy("got node", node)
     self:setEmotes(node)
     --zebug.error:dumpy("node",node)
 end
@@ -215,19 +226,19 @@ end
 ---@param emote EmoteDefinition
 function MenuRowController:formatRow(emote)
     self.emote = emote
-    if emote.name == emote.cat then
+    if EmoteDefinitions:isCat(emote) then
         -- this is a category
         self.label:SetText(EmoteCatName[emote.cat])
         local icon = EmoteCatDef[emote.cat].icon
         self.audioBtn.icon:SetTexture(nil) -- 450908:arrow_right
         self.vizBtn.icon:SetTexture(icon)
-        zebug.error:line(20, "cat", EmoteCatName[emote.cat])
+        --zebug.error:line(20, "cat", EmoteCatName[emote.cat])
     else
         -- this is an emote
         self.label:SetText(emote.name)
-        --zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
         self.audioBtn.icon:SetTexture(emote.audio and ICON_AUDIO)
         self.vizBtn.icon:SetTexture(emote.viz and ICON_VIZ)
+        --zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
     end
 end
 
@@ -243,8 +254,12 @@ end
 ---@param mouseClick MouseClick
 function MenuRowController:OnClick(mouseClick, isDown)
     zebug.trace:print("emote",self.emote.name, "mouseClick",mouseClick, "isDown",isDown)
-    EmoteDefinitions:doEmote(self.emote)
-    nav:notifySubs(NavEvent.OnEmote, "MenuRowController:OnClick", self.emote)
+    if EmoteDefinitions:isCat(self.emote) then
+        self.nav:pickNode(self.emote)
+    else
+        EmoteDefinitions:doEmote(self.emote)
+        self.nav:notifySubs(NavEvent.OnEmote, "MenuRowController:OnClick", self.emote)
+    end
 end
 
 

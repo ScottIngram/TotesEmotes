@@ -156,7 +156,7 @@ EmoteDefinitions.defaults = {
     massage   = { cat=EmoteCat.Happy, },
     meow      = { cat=EmoteCat.Neutral, },
     mock      = { cat=EmoteCat.Angry, },
-    moo       = { cat=EmoteCat.Neutral, audio=true, },
+    moo       = { cat=EmoteCat.Neutral, },
     moon      = { cat=EmoteCat.Angry, },
     mourn     = { cat=EmoteCat.Sad, viz=true, audio=true, },
     no        = { cat=EmoteCat.Angry, viz=true, audio=true, },
@@ -361,6 +361,12 @@ function EmoteDefinitions:flattenTreeIntoList(emotesTree)
 
     return list
 end
+
+---@param emote EmoteDefinition
+function EmoteDefinitions:isCat(emote)
+    return emote.name == emote.cat
+end
+
 
 ---@param emote EmoteDefinition
 function EmoteDefinitions:doEmote(emote)

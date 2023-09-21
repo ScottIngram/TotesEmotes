@@ -12,6 +12,7 @@ Totes.Wormhole()
 ---@class NavEvent
 NavEvent = {
     GoNode  = { name="GoNode",  arg1="instigator name", arg2="EmoteDefinition" },
+    GoUp    = { name="GoUp",  arg1="instigator name", arg2="EmoteDefinition" },
     OnEmote = { name="OnEmote", arg1="instigator name", arg2="EmoteDefinition" },
     Exit    = { name="Exit",    arg1="string", arg2="?" },
     Reset   = { name="Reset",   arg1="string", arg2="?" },
@@ -69,7 +70,7 @@ end
 -- PROOF OF CONCEPT
 function Navigator:throwUpTopMenu()
     local top = self:getTopMenu()
-    --zebug.warn:dumpy("getTopMenu()", top)
+    zebug.warn:dumpy("getTopMenu()", top)
     self:notifySubs(NavEvent.GoNode, "Go Top!", top)
 end
 
@@ -108,9 +109,18 @@ function Navigator:input(key)
 
 end
 
----@param nodeId number|string
-function Navigator:pickNode(nodeId)
+---@param emoteDef EmoteDefinition
+function Navigator:pickNode(emoteDef)
+    -- if I were doing more levels than just Cat -> list of emotes, then I should fuck around with maintaining state
+    local names = self.tree[emoteDef.cat]
+    local emotes = self:convertNamesIntoNodes(names)
+    zebug.error:dumpy("pickNode list", emotes)
+    self:notifySubs(NavEvent.GoNode, "MenuRowController:OnClick", emotes)
+end
 
+function Navigator:goUp()
+    -- if I were doing more levels than just Cat -> list of emotes, then I should fuck around with maintaining state
+    self:throwUpTopMenu("addon initialization")
 end
 
 ---@param event NavEvent

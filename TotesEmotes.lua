@@ -128,7 +128,7 @@ function initalizeAddonStuff()
     DB:initializeOptsMemory()
     Config:initializeOptionsMenu()
 
-    theMenu = TheMenu:new(emotesTree)
+    theMenu = TheMenu:new()
 
     emotesTree = EmoteDefinitions:makeCategorizedTree()
     --emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
