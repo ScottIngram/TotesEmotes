@@ -29,13 +29,14 @@ for name, i in pairs(EmoteCat) do
 end
 
 ---@class EmoteDefinition
----@field name string
+---@field name string a copy of the emote's key/name - this is populated dynamically while sorting the defs
 ---@field cat EmoteCat category
 ---@field audio boolean includes audible vocalization
 ---@field viz boolean includes visual animation
+---@field fix string some emotes break the Bliz API because of course they do.  This field is a synonym that works instead.
 
 ---@class EmoteTree
----@field catGroup table<string,table<string,EmoteDefinition>> -- ex. Happy -> { applaud -> {viz=true, audio=true}, agree -> {} }, Sad -> ... }
+---@field catGroup table<EmoteCat,table<number,EmoteDefinition>> -- ex. 1<Happy> -> { 1 -> {name="applaud", viz=true, audio=true}, agree -> {} }, Sad -> ... }
 
 -------------------------------------------------------------------------------
 -- Data
@@ -49,12 +50,12 @@ EmoteDefinitions.defaults = {
     apologize = { cat=EmoteCat.Sad, },
     applaud   = { cat=EmoteCat.Happy, viz=true, audio=true, },
     arm       = { cat=EmoteCat.Happy, },
-    attacktarget = { cat=EmoteCat.Combat, viz=true, audio=true, },
+    attacktarget = { cat=EmoteCat.Combat, viz=true, audio=true, fix="ATTACKMYTARGET", },
     bark      = { cat=EmoteCat.Neutral, },
     bashful   = { cat=EmoteCat.Happy, viz=true, },
     beckon    = { cat=EmoteCat.Happy, },
     beg       = { cat=EmoteCat.Sad, viz=true, },
-    belch     = { cat=EmoteCat.Neutral, },
+    belch     = { cat=EmoteCat.Neutral, fix="BURP", },
     bite      = { cat=EmoteCat.Angry, },
     bleed     = { cat=EmoteCat.Sad, },
     blink     = { cat=EmoteCat.Neutral, },
@@ -78,7 +79,7 @@ EmoteDefinitions.defaults = {
     comfort   = { cat=EmoteCat.Happy, },
     commend   = { cat=EmoteCat.Happy, viz=true, audio=true, },
     confused  = { cat=EmoteCat.Sad, viz=true, },
-    congrats  = { cat=EmoteCat.Happy, viz=true, audio=true, },
+    congrats  = { cat=EmoteCat.Happy, viz=true, audio=true, fix="CONGRATULATE", },
     cough     = { cat=EmoteCat.Sad, },
     cower     = { cat=EmoteCat.Sad, },
     crack     = { cat=EmoteCat.Angry, },
@@ -89,12 +90,12 @@ EmoteDefinitions.defaults = {
     curtsey   = { cat=EmoteCat.Happy, viz=true, },
     dance     = { cat=EmoteCat.Happy, viz=true, },
     ding      = { cat=EmoteCat.Happy, },
-    doom      = { cat=EmoteCat.Angry, },
+    doom      = { cat=EmoteCat.Angry, audio=true, fix="THREATEN", },
     drink     = { cat=EmoteCat.Happy, viz=true, },
     drool     = { cat=EmoteCat.Sad, },
     duck      = { cat=EmoteCat.Sad, },
     eat       = { cat=EmoteCat.Sad, viz=true, },
-    excited   = { cat=EmoteCat.Happy, viz=true, },
+    excited   = { cat=EmoteCat.Happy, viz=true, fix="TALKEX", },
     eye       = { cat=EmoteCat.Neutral, },
     facepalm  = { cat=EmoteCat.Sad, },
     fart      = { cat=EmoteCat.Neutral, }, -- no longer targets players
@@ -103,7 +104,7 @@ EmoteDefinitions.defaults = {
     flex      = { cat=EmoteCat.Happy, viz=true, },
     flirt     = { cat=EmoteCat.Happy, viz=true, audio=true, },
     flop      = { cat=EmoteCat.Sad, },
-    followme  = { cat=EmoteCat.Combat, viz=true, audio=true, },
+    followme  = { cat=EmoteCat.Combat, viz=true, audio=true, fix="FOLLOW", },
     frown     = { cat=EmoteCat.Angry, },
     gasp      = { cat=EmoteCat.Happy, viz=true, },
     gaze      = { cat=EmoteCat.Neutral, },
@@ -111,7 +112,7 @@ EmoteDefinitions.defaults = {
     glare     = { cat=EmoteCat.Angry, },
     gloat     = { cat=EmoteCat.Angry, viz=true, audio=true, },
     golfclap  = { cat=EmoteCat.Angry, viz=true, audio=true, },
-    goodbye   = { cat=EmoteCat.Happy, viz=true, audio=true, },
+    goodbye   = { cat=EmoteCat.Happy, viz=true, audio=true, fix="BYE", },
     greet     = { cat=EmoteCat.Happy, viz=true, },
     grin      = { cat=EmoteCat.Happy, },
     groan     = { cat=EmoteCat.Sad, },
@@ -136,8 +137,8 @@ EmoteDefinitions.defaults = {
     kiss      = { cat=EmoteCat.Happy, viz=true, audio=true, },
     kneel     = { cat=EmoteCat.Neutral, viz=true, },
     laugh     = { cat=EmoteCat.Happy, viz=true, audio=true, },
-    lavish    = { cat=EmoteCat.Happy, },
-    lay       = { cat=EmoteCat.Neutral, viz=true, },
+    lavish    = { cat=EmoteCat.Happy, fix="PRAISE", },
+    lay       = { cat=EmoteCat.Neutral, viz=true, fix="LAYDOWN", },
     lick      = { cat=EmoteCat.Neutral, },
     listen    = { cat=EmoteCat.Neutral, },
     lost      = { cat=EmoteCat.Sad, viz=true, },
@@ -165,16 +166,16 @@ EmoteDefinitions.defaults = {
     pounce    = { cat=EmoteCat.Happy, },
     pray      = { cat=EmoteCat.Neutral, viz=true, },
     purr      = { cat=EmoteCat.Happy, },
-    puzzled   = { cat=EmoteCat.Sad, viz=true, },
+    puzzled   = { cat=EmoteCat.Sad, viz=true, fix="PUZZLE", },
     quack     = { cat=EmoteCat.Neutral, viz=true, },
-    question  = { cat=EmoteCat.Sad, viz=true, },
+    question  = { cat=EmoteCat.Sad, viz=true, fix="xxx", fix="TALKQ", },
     raise     = { cat=EmoteCat.Neutral, },
     rasp      = { cat=EmoteCat.Angry, viz=true, audio=true, },
     ready     = { cat=EmoteCat.Combat, },
     regret    = { cat=EmoteCat.Sad, },
-    roar      = { cat=EmoteCat.Angry, viz=true, },
+    roar      = { cat=EmoteCat.Angry, viz=true, audio=true, },
     rofl      = { cat=EmoteCat.Happy, viz=true, audio=true, },
-    rolleyes  = { cat=EmoteCat.Sad, viz=true, audio=true, },
+    rolleyes  = { cat=EmoteCat.Sad, viz=true, },
     rude      = { cat=EmoteCat.Angry, viz=true, },
     salute    = { cat=EmoteCat.Happy, viz=true, },
     scared    = { cat=EmoteCat.Sad, },
@@ -186,7 +187,7 @@ EmoteDefinitions.defaults = {
     shrug     = { cat=EmoteCat.Neutral, viz=true, },
     shy       = { cat=EmoteCat.Happy, viz=true, },
     sigh      = { cat=EmoteCat.Sad, audio=true, },
-    silly     = { cat=EmoteCat.Happy, viz=true, audio=true, },
+    silly     = { cat=EmoteCat.Happy, viz=true, audio=true, fix="JOKE", },
     slap      = { cat=EmoteCat.Angry, },
     sleep     = { cat=EmoteCat.Sad, viz=true, },
     smile     = { cat=EmoteCat.Happy, },
@@ -350,4 +351,11 @@ function EmoteDefinitions:flattenTreeIntoList(emotesTree)
     end
 
     return list
+end
+
+---@param emote EmoteDefinition
+function EmoteDefinitions:doEmote(emote)
+    local id = emote.fix or emote.name
+    zebug.error:print("name", emote.name, "fix", emote.fix)
+    DoEmote(id);
 end
