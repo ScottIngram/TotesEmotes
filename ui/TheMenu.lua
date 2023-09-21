@@ -27,8 +27,16 @@ _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
 ---@field className string
 ---@field emote EmoteDefinition
 ---@field nav Navigator
+---@field label table UI obj From the XML
 MenuRowController = { className = "MenuRowController" }
 _G["TotesTheMenuRowController"] = MenuRowController -- export for use by the XML which will create a new instance of MenuRowController
+
+-------------------------------------------------------------------------------
+-- Constants
+-------------------------------------------------------------------------------
+
+ICON_AUDIO = 2056011
+ICON_VIZ   = 538536
 
 -------------------------------------------------------------------------------
 -- Data
@@ -79,6 +87,7 @@ function TheMenu:new()
         -- END callback
     end)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.listing.scrollBox, self.listing.scrollBar, view)
+    --self.listing.scrollBox:SetShown(self.listing.scrollBox:HasScrollableExtent())
 
     return self
 end
@@ -89,7 +98,6 @@ function TheMenu:setEmotes(emotes)
         self.dataProvider = CreateDataProvider(emotes)
     end
     self.listing.scrollBox:SetDataProvider(self.dataProvider)
-    self.listing.scrollBox:SetShown(self.listing.scrollBox:HasScrollableExtent())
 end
 
 function TheMenu:toggle()
@@ -173,9 +181,9 @@ end
 -- XML Event handlers
 -------------------------------------------------------------------------------
 
-function TheMenu:OnLoad(zelf)
-    -- this doesn't appear to be called
-    zebug.error:line(20,"self",self, "xml zelf", zelf, "TheMenu",TheMenu, "theMenu",theMenu)
+function TheMenu:OnLoad(arg1)
+    -- self is the XML's instance of TheMenu mixin
+    zebug.trace:name("OnLoad"):print("self",self, "arg1", arg1, "TheMenu",TheMenu, "theMenu",theMenu)
 end
 
 -------------------------------------------------------------------------------
@@ -185,16 +193,17 @@ end
 ---@param nav Navigator
 function TheMenu:setNavSubscriptions(nav)
     self.nav = nav
-    nav:subscribe(NavEvent.GoNode, TheMenu_handleGoNode, self.className)
-    nav:subscribe(NavEvent.OnEmote, TheMenu_handleOnEmote, self.className)
+    nav:subscribe(NavEvent.GoNode, function(...) self:handleGoNode(...) end, self.className)
+    nav:subscribe(NavEvent.OnEmote, function(...) self:handleOnEmote(...) end, self.className)
 end
 
-function TheMenu_handleGoNode(event, msg, node)
-    zebug.info:name("handleGoNode"):print("event",event, "msg",msg, "node",node)
-    -- TODO: refresh the display
+function TheMenu:handleGoNode(msg, node)
+    zebug.info:name("handleGoNode"):print("msg",msg, "node",node)
+    self:setEmotes(node)
+    --zebug.error:dumpy("node",node)
 end
 
-function TheMenu_handleOnEmote(msg, node)
+function TheMenu:handleOnEmote(msg, node)
     -- Prolly not going to do anything here... I don't want to auto close the menu, do I?  Not really.
     zebug.info:name("handleDoEmote"):print("self",self, "Heard msg",msg, "node",node)
 end
@@ -208,22 +217,17 @@ function MenuRowController:formatRow(emote)
     self.emote = emote
     if emote.name == emote.cat then
         -- this is a category
-        self.label:SetText("===== "..  EmoteCatName[emote.cat].." =====")
-        --zebug.error:line(20, "cat", EmoteCatName[emote.cat])
+        self.label:SetText(EmoteCatName[emote.cat])
+        local icon = EmoteCatDef[emote.cat].icon
+        self.audioBtn.icon:SetTexture(nil) -- 450908:arrow_right
+        self.vizBtn.icon:SetTexture(icon)
+        zebug.error:line(20, "cat", EmoteCatName[emote.cat])
     else
         -- this is an emote
         self.label:SetText(emote.name)
         --zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
-        if emote.audio then
-            self.audioBtn.icon:SetTexture(2056011)
-        else
-            self.audioBtn.icon:SetTexture(nil)
-        end
-        if emote.viz then
-            self.vizBtn.icon:SetTexture(538536)
-        else
-            self.vizBtn.icon:SetTexture(nil)
-        end
+        self.audioBtn.icon:SetTexture(emote.audio and ICON_AUDIO)
+        self.vizBtn.icon:SetTexture(emote.viz and ICON_VIZ)
     end
 end
 

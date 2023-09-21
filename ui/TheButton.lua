@@ -117,8 +117,8 @@ function TheButton:setNavSubscriptions(navigator)
     navigator:subscribe(NavEvent.GoNode, TheButton_handleGoNode, self.className)
 end
 
-function TheButton_handleGoNode(event, msg, node)
-    zebug.info:name("handleGoNode"):print("event",event, "msg",msg, "node",node)
+function TheButton_handleGoNode(msg, node)
+    zebug.info:name("handleGoNode"):print("msg",msg, "node",node)
     -- TODO: refresh the display
 end
 

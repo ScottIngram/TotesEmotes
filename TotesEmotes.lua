@@ -128,18 +128,19 @@ function initalizeAddonStuff()
     DB:initializeOptsMemory()
     Config:initializeOptionsMenu()
 
+    theMenu = TheMenu:new(emotesTree)
+
     emotesTree = EmoteDefinitions:makeCategorizedTree()
-    emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
-
+    --emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
+    --theMenu:setEmotes(emotesList)
     nav = Navigator:new(emotesTree)
-
-    theMenu = TheMenu:new()
-    theMenu:setEmotes(emotesList)
-
     theMenu:setNavSubscriptions(nav)
     theButton:setNavSubscriptions(nav)
 
-    nav:goTop("addon initialization")
+    --nav:reset("addon initialization")
+    --nav:throwUpSubMenu(EmoteCat.Combat)
+    --nav:throwUpFlatList(emotesTree)
+    nav:throwUpTopMenu("addon initialization")
 
     -- flags to wait out the chaos happening when the UI first loads / reloads.
     isTotesInitialized = true

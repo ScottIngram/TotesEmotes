@@ -101,12 +101,6 @@
                     <Anchor point="LEFT" relativeKey="$parent.vizBtn" relativePoint="RIGHT" x="4"/>
                 </Anchors>
             </FontString>
-            <FontString parentKey="unused" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
-                <Size y="12"/>
-                <Anchors>
-                    <Anchor point="LEFT" relativeKey="$parent.label" relativePoint="RIGHT"/>
-                </Anchors>
-            </FontString>
         </Layer>
         <Layer level="OVERLAY" textureSubLevel="2">
             <Texture parentKey="SelectedOverlay" atlas="Professions_Recipe_Active" useAtlasSize="true" hidden="true">

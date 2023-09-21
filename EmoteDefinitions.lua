@@ -22,6 +22,15 @@ EmoteCat = {
     Combat  = 5,
 }
 
+---@enum EmoteCatDef
+EmoteCatDef = {
+    [EmoteCat.Happy  ] = { icon=237554 },
+    [EmoteCat.Angry  ] = { icon=237553 },
+    [EmoteCat.Sad    ] = { icon=237555 },
+    [EmoteCat.Neutral] = { icon=237552 },
+    [EmoteCat.Combat ] = { icon=132147 }, -- 132147:swords, 458724:target,
+}
+
 ---@type table<number,string>
 EmoteCatName = {}
 for name, i in pairs(EmoteCat) do
