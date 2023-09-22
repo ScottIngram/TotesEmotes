@@ -11,8 +11,7 @@ Totes.Wormhole()
 
 ---@class NavEvent
 NavEvent = {
-    GoNode  = { name="GoNode",  arg1="instigator name", arg2="EmoteDefinition" },
-    GoUp    = { name="GoUp",  arg1="instigator name", arg2="EmoteDefinition" },
+    GoNode  = { name="GoNode",  arg1="instigator name", arg2="key", arg3="EmoteDefinition" },
     OnEmote = { name="OnEmote", arg1="instigator name", arg2="EmoteDefinition" },
     Exit    = { name="Exit",    arg1="string", arg2="?" },
     Reset   = { name="Reset",   arg1="string", arg2="?" },
@@ -56,7 +55,7 @@ end
 function Navigator:reset(msg, newTree)
     self:replaceMenu(newTree or self.tree)
     self:notifySubs(NavEvent.Reset, msg or "Reset event came from Navigator:Reset")
-    self:notifySubs(NavEvent.GoNode, msg or "GoNode event came from Navigator:Reset", self.node)
+    self:throwUpTopMenu()
 end
 
 -- PROOF OF CONCEPT
@@ -64,28 +63,28 @@ end
 function Navigator:throwUpSubMenu(emoteCat)
     local subMenu = self.tree[emoteCat or EmoteCat.Combat]
     local emotes = self:convertNamesIntoNodes(subMenu)
-    self:notifySubs(NavEvent.GoNode, "menu for one category", emotes)
+    self:notifySubs(NavEvent.GoNode, "menu for one category", emoteCat, emotes)
 end
 
 -- PROOF OF CONCEPT
 function Navigator:throwUpTopMenu()
     local top = self:getTopMenu()
-    zebug.warn:dumpy("getTopMenu()", top)
-    self:notifySubs(NavEvent.GoNode, "Go Top!", top)
+    --zebug.warn:dumpy("getTopMenu()", top)
+    self:notifySubs(NavEvent.GoNode, "Go Top!", nil, top)
 end
 
 -- PROOF OF CONCEPT
 function Navigator:throwUpFlatList(emotesTree)
     local emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
     --zebug.warn:dumpy("emotesList",emotesList)
-    self:notifySubs(NavEvent.GoNode, "FlAt", emotesList)
+    self:notifySubs(NavEvent.GoNode, "FlAt", nil, emotesList)
 end
 
 function Navigator:getTopMenu()
     local list = {}
     ---@param emoteCat EmoteCat
     for emoteCat, arrayOfEmoteDefs in ipairs(self.tree) do
-        zebug.error:print("i", emoteCat, "arrayOfEmoteDefs", arrayOfEmoteDefs)
+        --zebug.trace:print("i", emoteCat, "arrayOfEmoteDefs", arrayOfEmoteDefs)
         ---@type EmoteDefinition
         local row = { cat=emoteCat, name=emoteCat, icon = EmoteCatDef[arrayOfEmoteDefs] and EmoteCatDef[arrayOfEmoteDefs].icon }
         list[emoteCat] = row
@@ -97,7 +96,7 @@ function Navigator:convertNamesIntoNodes(names)
     local nodes = {}
     ---@param i EmoteCat
     for i, name in ipairs(names) do
-        zebug.error:print("i", i, "name", name)
+        --zebug.trace:print("i", i, "name", name)
         nodes[i] = EmoteDefinitions.defaults[name]
     end
     return nodes
@@ -114,8 +113,8 @@ function Navigator:pickNode(emoteDef)
     -- if I were doing more levels than just Cat -> list of emotes, then I should fuck around with maintaining state
     local names = self.tree[emoteDef.cat]
     local emotes = self:convertNamesIntoNodes(names)
-    zebug.error:dumpy("pickNode list", emotes)
-    self:notifySubs(NavEvent.GoNode, "MenuRowController:OnClick", emotes)
+    --zebug.error:dumpy("pickNode list", emotes)
+    self:notifySubs(NavEvent.GoNode, "MenuRowController:OnClick", emoteDef.cat, emotes)
 end
 
 function Navigator:goUp()
@@ -146,7 +145,7 @@ function Navigator:notifySubs(event, msg, ...)
 
     local handled = false
     for callback, who in pairs(subs) do
-        zebug.trace:print("broadcasting event",event.name, "to subscriber",who, "invoking",callback, "with msg",msg)
+        zebug.trace:print("broadcasting event",event.name, "to subscriber",who, "invoking",callback, "with msg",msg, "args",... )
         local wasHandled = callback(msg, ...)
         if wasHandled then handled = true end
     end

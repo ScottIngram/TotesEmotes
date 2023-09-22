@@ -207,8 +207,8 @@ function TheMenu:setNavSubscriptions(nav)
     nav:subscribe(NavEvent.OnEmote, function(...) self:handleOnEmote(...) end, self.className)
 end
 
-function TheMenu:handleGoNode(msg, node)
-    zebug.info:name("handleGoNode"):print("msg",msg, "node",node)
+function TheMenu:handleGoNode(msg, key, node)
+    zebug.info:name("handleGoNode"):print("msg",msg, "key",key, "node",node)
     --zebug.info:dumpy("got node", node)
     self:setEmotes(node)
     --zebug.error:dumpy("node",node)
@@ -253,7 +253,7 @@ end
 
 ---@param mouseClick MouseClick
 function MenuRowController:OnClick(mouseClick, isDown)
-    zebug.trace:print("emote",self.emote.name, "mouseClick",mouseClick, "isDown",isDown)
+    zebug.trace:name("OnClick"):print("emote",self.emote.name, "mouseClick",mouseClick, "isDown",isDown)
     if EmoteDefinitions:isCat(self.emote) then
         self.nav:pickNode(self.emote)
     else
