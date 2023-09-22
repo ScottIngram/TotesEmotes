@@ -13,11 +13,12 @@ Totes.Wormhole()
 ---@field className string "TheMenu"
 ---@field nav Navigator
 ---@field isDragging boolean
----@field titleBar table
----@field icon table
----@field closeBtn table
----@field inset table
----@field border table
+---@field titleBar table UI obj from the XML
+---@field header table UI obj from the XML
+---@field icon table UI obj from the XML
+---@field closeBtn table UI obj from the XML
+---@field inset table UI obj from the XML
+---@field border table UI obj from the XML
 ---@type TheMenu|KeyListenerMixin
 TheMenu = { className = "TheMenu", }
 KeyListenerMixin:inject(TheMenu)
@@ -27,7 +28,7 @@ _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
 ---@field className string
 ---@field emote EmoteDefinition
 ---@field nav Navigator
----@field label table UI obj From the XML
+---@field label table UI obj from the XML
 MenuRowController = { className = "MenuRowController" }
 _G["TotesTheMenuRowController"] = MenuRowController -- export for use by the XML which will create a new instance of MenuRowController
 
@@ -35,6 +36,7 @@ _G["TotesTheMenuRowController"] = MenuRowController -- export for use by the XML
 -- Constants
 -------------------------------------------------------------------------------
 
+ICON_TOP_MENU = 132351
 ICON_AUDIO = 2056011
 ICON_VIZ   = 538536
 
@@ -69,7 +71,8 @@ function TheMenu:new()
 
     -- Appearance
     self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
-    self:setIcon(132351)-- 2056011
+    self:setIcon(ICON_TOP_MENU)
+    self.titleBar.TitleText:SetText(ADDON_NAME)
 
     -- Behavior
     self:SetScript("OnMouseDown", TheMenu.onMouseDown)
@@ -203,20 +206,18 @@ end
 ---@param nav Navigator
 function TheMenu:setNavSubscriptions(nav)
     self.nav = nav
+    nav:subscribe(NavEvent.Exit, function(...) self:Hide() end, self.className)
     nav:subscribe(NavEvent.GoNode, function(...) self:handleGoNode(...) end, self.className)
-    nav:subscribe(NavEvent.OnEmote, function(...) self:handleOnEmote(...) end, self.className)
 end
 
 function TheMenu:handleGoNode(msg, key, node)
     zebug.info:name("handleGoNode"):print("msg",msg, "key",key, "node",node)
     --zebug.info:dumpy("got node", node)
+    local icon = key and EmoteCatDef[key].icon or ICON_TOP_MENU
+    self.header.fontString:SetText(EmoteCatName[key])
+    self:setIcon(icon)
     self:setEmotes(node)
     --zebug.error:dumpy("node",node)
-end
-
-function TheMenu:handleOnEmote(msg, node)
-    -- Prolly not going to do anything here... I don't want to auto close the menu, do I?  Not really.
-    zebug.info:name("handleDoEmote"):print("self",self, "Heard msg",msg, "node",node)
 end
 
 -------------------------------------------------------------------------------

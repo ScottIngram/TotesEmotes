@@ -23,6 +23,7 @@ NavEvent = {
 ---@field stack table<number,number|string> -- array of nodeIds representing the path of nodes traversed
 ---@field subscribers table<string,table<function,boolean|string> : <event,list<callback,name>> collection of fuctions to be invoked in case of events
 Navigator = {
+    stack = {},
     subscribers = {},
 }
 
@@ -37,7 +38,7 @@ Navigator = {
 ---@param treeMenu EmoteTree
 function Navigator:new(treeMenu)
     ---@type Navigator
-    local self = { }
+    local self = deepcopy(Navigator, {})
     setmetatable(self, { __index = Navigator })
     self:replaceMenu(treeMenu)
     return self
@@ -49,13 +50,28 @@ function Navigator:replaceMenu(treeMenu)
         self.tree = treeMenu
         self.node = self:getTopMenu()
     end
-    self.stack = nil
+    for i = #self.stack, 1, -1 do
+        self.stack[i] = nil
+    end
 end
 
 function Navigator:reset(msg, newTree)
     self:replaceMenu(newTree or self.tree)
     self:notifySubs(NavEvent.Reset, msg or "Reset event came from Navigator:Reset")
     self:throwUpTopMenu()
+end
+
+function Navigator:push(key)
+    self.stack[#self.stack + 1] = key
+end
+
+function Navigator:pop()
+    local foo
+    if #self.stack > 0 then
+        foo = self.stack[#self.stack]
+        self.stack[#self.stack] = nil
+    end
+    return foo
 end
 
 -- PROOF OF CONCEPT
@@ -102,7 +118,6 @@ function Navigator:convertNamesIntoNodes(names)
     return nodes
 end
 
-
 ---@param key string a keystroke
 function Navigator:input(key)
 
@@ -110,16 +125,20 @@ end
 
 ---@param emoteDef EmoteDefinition
 function Navigator:pickNode(emoteDef)
-    -- if I were doing more levels than just Cat -> list of emotes, then I should fuck around with maintaining state
+    self:push(emoteDef)
     local names = self.tree[emoteDef.cat]
     local emotes = self:convertNamesIntoNodes(names)
     --zebug.error:dumpy("pickNode list", emotes)
-    self:notifySubs(NavEvent.GoNode, "MenuRowController:OnClick", emoteDef.cat, emotes)
+    self:notifySubs(NavEvent.GoNode, "todo: meaningful info", emoteDef.cat, emotes)
 end
 
 function Navigator:goUp()
-    -- if I were doing more levels than just Cat -> list of emotes, then I should fuck around with maintaining state
-    self:throwUpTopMenu("addon initialization")
+    local level = self:pop()
+    if level then
+        self:throwUpTopMenu("addon initialization")
+    else
+        self:notifySubs(NavEvent.Exit, "goUp")
+    end
 end
 
 ---@param event NavEvent
@@ -145,7 +164,7 @@ function Navigator:notifySubs(event, msg, ...)
 
     local handled = false
     for callback, who in pairs(subs) do
-        zebug.trace:print("broadcasting event",event.name, "to subscriber",who, "invoking",callback, "with msg",msg, "args",... )
+        zebug.trace:print("broadcasting event",event.name, "to subscriber",who, "invoking",callback, "with msg",msg, "arg1",... )
         local wasHandled = callback(msg, ...)
         if wasHandled then handled = true end
     end

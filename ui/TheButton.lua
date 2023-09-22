@@ -115,10 +115,16 @@ end
 function TheButton:setNavSubscriptions(navigator)
     self.nav = navigator
     navigator:subscribe(NavEvent.GoNode, TheButton_handleGoNode, self.className)
+    nav:subscribe(NavEvent.OnEmote, TheButton_handleEmote, self.className)
 end
 
 function TheButton_handleGoNode(msg, node)
     zebug.info:name("handleGoNode"):print("msg",msg, "node",node)
+    -- TODO: refresh the display
+end
+
+function TheButton_handleEmote(msg, node)
+    zebug.info:name("emote"):print("msg",msg, "node",node)
     -- TODO: refresh the display
 end
 

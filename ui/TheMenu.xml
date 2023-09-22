@@ -14,6 +14,25 @@
             <Anchor point="BOTTOMRIGHT" relativeKey="$parent" relativePoint="TOPLEFT" x="40" y="-60" />
         </Anchors>
         <Frames>
+            <Frame parentKey="header" frameLevel="510">
+                <Size x="0" y="20"/>
+                <Anchors>
+                    <Anchor point="TOPLEFT" x="60" y="-30"/>
+                    <Anchor point="TOPRIGHT" x="-25" y="-30"/>
+                </Anchors>
+                <Layers>
+                    <Layer level="OVERLAY">
+                        <FontString inherits="GameFontNormal" parentKey="fontString" wordwrap="false">
+                            <Color r="1" g="1" b="1" a="1"/>
+                            <Anchors>
+                                <Anchor point="TOP" x="0" y="-5"/>
+                                <Anchor point="LEFT"/>
+                                <Anchor point="RIGHT"/>
+                            </Anchors>
+                        </FontString>
+                    </Layer>
+                </Layers>
+            </Frame>
             <Frame parentKey="listing" inherits="InsetFrameTemplate">
                 <Anchors>
                     <Anchor point="TOPLEFT" x="4" y="-60" />
