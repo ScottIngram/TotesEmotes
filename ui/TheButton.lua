@@ -104,7 +104,7 @@ end
 ---@return boolean true if consumed: stop propagation!
 function TheButton:handleKeyPress(key)
     zebug.info:print("key",key)
-    return true
+    return KeyListenerResult.passedOn
 end
 
 -------------------------------------------------------------------------------
@@ -119,12 +119,12 @@ function TheButton:setNavSubscriptions(navigator)
 end
 
 function TheButton_handleGoNode(msg, node)
-    zebug.info:name("handleGoNode"):print("msg",msg, "node",node)
+    --zebug.info:name("handleGoNode"):print("msg",msg, "node",node)
     -- TODO: refresh the display
 end
 
 function TheButton_handleEmote(msg, node)
-    zebug.info:name("emote"):print("msg",msg, "node",node)
+    --zebug.info:name("emote"):print("msg",msg, "node",node)
     -- TODO: refresh the display
 end
 

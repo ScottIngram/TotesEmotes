@@ -19,14 +19,16 @@ Totes.Wormhole()
 ---@field closeBtn table UI obj from the XML
 ---@field inset table UI obj from the XML
 ---@field border table UI obj from the XML
+---@field rowList table<number,MenuRowController> the rows currently displayed (well, the first 10 anyway)
 ---@type TheMenu|KeyListenerMixin
-TheMenu = { className = "TheMenu", }
+TheMenu = { className = "TheMenu", rowList={}, }
 KeyListenerMixin:inject(TheMenu)
 _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
 
 ---@class MenuRowController
 ---@field className string
 ---@field emote EmoteDefinition
+---@field navNode NavNode
 ---@field nav Navigator
 ---@field label table UI obj from the XML
 MenuRowController = { className = "MenuRowController" }
@@ -77,13 +79,17 @@ function TheMenu:new()
     -- Behavior
     self:SetScript("OnMouseDown", TheMenu.onMouseDown)
     self:SetScript("OnMouseUp", TheMenu.onMouseUp)
-    self:SetMovable(true)
-    self:startKeyListener("onlyOnMouseOver")
+    self.canMove = false -- TODO - make a config option
+    if self.canMove then
+        self:SetMovable(true)
+    end
+
+    self:startKeyListener()
 
     -- scroll area
     local pad = 0
     local elementSpacing = 2
-    local view = CreateScrollBoxListLinearView(pad, pad, 5, pad, elementSpacing)
+    local view = CreateScrollBoxListLinearView(pad, pad, 15, pad, elementSpacing)
     view:SetElementInitializer("TotesTemplate_TheMenu_EmoteRow", function(rowBtn, rowData)
         -- START callback
         self:initializeRowBtn(rowBtn, rowData)
@@ -95,17 +101,17 @@ function TheMenu:new()
     return self
 end
 
----@param emotes table<number, EmoteDefinition>
-function TheMenu:setEmotes(emotes)
+---@param navNodesList table<index,NavNode>
+function TheMenu:setListing(navNodesList)
     if true --[[enable for now]] and self.dataProvider then
         -- Ok, this DOES work now.  -- none of this seems to trigger a refresh... yay complete lack of documentation
-        self.dataProvider:Init(emotes)
+        self.dataProvider:Init(navNodesList)
         --self.dataProvider:Flush()
         self.dataProvider:TriggerEvent(DataProviderMixin.Event.OnSizeChanged, false);
         --self.listing.scrollBox:SetDataProvider(self.dataProvider)
         self.listing.scrollBox:OnViewDataChanged()
     else
-        self.dataProvider = CreateDataProvider(emotes)
+        self.dataProvider = CreateDataProvider(navNodesList)
         self.listing.scrollBox:SetDataProvider(self.dataProvider)
     end
 end
@@ -139,19 +145,39 @@ function TheMenu:activateDrag()
     if mouseClick == MouseClick.LEFT then
         self.mouseX, self.mouseY = GetCursorPosition()
         self.isDragging = true
-        self:StartMoving()
+        if self.canMove then
+            self:StartMoving()
+        end
     end
     zebug.trace:print("onMouseDown", mouseClick)
 end
 
 ---@param rowBtn MenuRowController
----@param emote EmoteDefinition
-function TheMenu:initializeRowBtn(rowBtn, emote)
+---@param navNode NavNode
+function TheMenu:initializeRowBtn(rowBtn, navNode)
+    zebug.info:print(rowBtn:GetOrderIndex())
     if not rowBtn.getMenu then
         rowBtn.getMenu = function() return self end
         rowBtn.nav = self.nav
     end
-    rowBtn:formatRow(emote)
+    rowBtn:formatRow(navNode)
+end
+
+---@param row MenuRowController
+function TheMenu:selectedRow(row)
+    if self.currentlySelected then
+        self.currentlySelected.SelectedOverlay:Hide()
+    end
+    if row then
+        row.SelectedOverlay:Show()
+    end
+    self.currentlySelected = row
+end
+
+function TheMenu:clearRowList()
+    for i=#self.rowList, 1, -1 do
+        self.rowList[i] = nil
+    end
 end
 
 -------------------------------------------------------------------------------
@@ -160,11 +186,20 @@ end
 
 ---@return boolean true if consumed: stop propagation!
 function TheMenu:handleKeyPress(key)
-    zebug.info:print("key",key)
     if key == "ESCAPE" then
+        zebug.trace:print("handling Escape")
+        self:selectedRow(nil)
         self.nav:goUp()
+        return KeyListenerResult.consumed
+    else
+        local n = tonumber(key) or 999
+        if n <= 9 then
+            zebug.trace:print("reporting key",key)
+            if n == 0 then n = 10 end
+            return self.nav:input(n)
+        end
     end
-    return true
+    return KeyListenerResult.passedOn
 end
 
 -------------------------------------------------------------------------------
@@ -175,7 +210,9 @@ end
 function TheMenu:onMouseDown(mouseClick)
     if mouseClick == MouseClick.LEFT then
         self.isDragging = true
-        self:StartMoving()
+        if self.canMove then
+            self:StartMoving()
+        end
     end
     zebug.trace:print("onMouseDown", mouseClick)
 end
@@ -185,7 +222,6 @@ function TheMenu:onMouseUp(mouseClick)
     if mouseClick == MouseClick.LEFT then
         self.isDragging = false
         self:StopMovingOrSizing()
-
     end
     zebug.trace:print("onMouseUp", mouseClick)
 end
@@ -206,40 +242,76 @@ end
 ---@param nav Navigator
 function TheMenu:setNavSubscriptions(nav)
     self.nav = nav
-    nav:subscribe(NavEvent.Exit, function(...) self:Hide() end, self.className)
-    nav:subscribe(NavEvent.GoNode, function(...) self:handleGoNode(...) end, self.className)
+    nav:subscribe(NavEvent.Exit, function(...) self:toggle() end, self.className)
+    ---@param navNode NavNode
+    nav:subscribe(NavEvent.GoNode, function(msg, navNode) self:handleGoNode(msg, navNode) end, self.className)
+    ---@param navNode NavNode
+    nav:subscribe(NavEvent.Execute, function(msg, navNode) self:handleExecuteNode(msg, navNode) end, self.className)
 end
 
-function TheMenu:handleGoNode(msg, key, node)
-    zebug.info:name("handleGoNode"):print("msg",msg, "key",key, "node",node)
-    --zebug.info:dumpy("got node", node)
-    local icon = key and EmoteCatDef[key].icon or ICON_TOP_MENU
+---@param navNode NavNode
+function TheMenu:handleGoNode(msg, navNode)
+    local key = navNode.id
+    local emoteDef = navNode.domainData
+    local isEmote = emoteDef and emoteDef.isEmote
+    zebug.info:name("handleGoNode"):print("msg",msg, "node level", navNode.level, "key",key, "#kids", navNode.kids and #navNode.kids, "isEmote",isEmote)
+    local icon = emoteDef and emoteDef.icon or ICON_TOP_MENU
     self.header.fontString:SetText(EmoteCatName[key])
     self:setIcon(icon)
-    self:setEmotes(node)
-    --zebug.error:dumpy("node",node)
+    self:clearRowList()
+    self:setListing(navNode.kids)
+end
+
+---@param navNode NavNode
+function TheMenu:handleExecuteNode(msg, navNode)
+    local rowFrame = self:getRowForNavNode(navNode)
+    rowFrame:Click()
+end
+
+---@param navNode NavNode
+---@return MenuRowController
+function TheMenu:getRowForNavNode(navNode)
+    local n = navNode.id
+    zebug.error:dumpKeys(self.rowList)
+    local result = self.rowList[n]
+    zebug.error:print("n",n, "result",result)
+    return result
 end
 
 -------------------------------------------------------------------------------
 -- RowController
 -------------------------------------------------------------------------------
 
----@param emote EmoteDefinition
-function MenuRowController:formatRow(emote)
-    self.emote = emote
-    if EmoteDefinitions:isCat(emote) then
+---@param navNode NavNode
+function MenuRowController:formatRow(navNode)
+    zebug.error:dumpKeys(navNode)
+    zebug.error:dumpKeys(navNode.domainData)
+    self.navNode = navNode
+    self.emote = navNode.domainData
+    local emote = self.emote
+    if navNode.level == 1 then -- TODO: this feels like a kludge
         -- this is a category
-        self.label:SetText(EmoteCatName[emote.cat])
-        local icon = EmoteCatDef[emote.cat].icon
+        self.label:SetText(emote.name)
         self.audioBtn.icon:SetTexture(nil) -- 450908:arrow_right
-        self.vizBtn.icon:SetTexture(icon)
-        --zebug.error:line(20, "cat", EmoteCatName[emote.cat])
+        self.vizBtn.icon:SetTexture(emote.icon)
+        zebug.error:line(20, "CAT", emote.name, "icon",emote.icon)
     else
         -- this is an emote
         self.label:SetText(emote.name)
         self.audioBtn.icon:SetTexture(emote.audio and ICON_AUDIO)
         self.vizBtn.icon:SetTexture(emote.viz and ICON_VIZ)
-        --zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",name)
+        zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
+    end
+
+    -- put a number next to the first 10 rows
+    local n = self:GetOrderIndex()
+    if n <= 10 then
+        self:getMenu().rowList[n] = self
+        zebug.trace:print("adding self to rowList",self.emote.name, "at index n",n)
+        n = n==10 and 0 or n
+        self.audioBtn.text:SetText(n)
+    else
+        self.audioBtn.text:SetText(nil)
     end
 end
 
@@ -249,17 +321,19 @@ end
 
 function MenuRowController:OnLoad(...)
     -- this doesn't appear to be called
-    zebug.info:print("OnLoad args", ...)
+    zebug.error:name("OnLoad"):print("OnLoad args", ...)
 end
 
 ---@param mouseClick MouseClick
 function MenuRowController:OnClick(mouseClick, isDown)
-    zebug.trace:name("OnClick"):print("emote",self.emote.name, "mouseClick",mouseClick, "isDown",isDown)
-    if EmoteDefinitions:isCat(self.emote) then
-        self.nav:pickNode(self.emote)
+    local emote = self.emote
+    zebug.trace:name("OnClick"):print("emote",emote.name, "mouseClick",mouseClick, "isDown",isDown)
+    if self.navNode.level == 1 then --TODO: this feels like a kludge
+        self.nav:pickNode(self.navNode)
     else
-        EmoteDefinitions:doEmote(self.emote)
-        self.nav:notifySubs(NavEvent.OnEmote, "MenuRowController:OnClick", self.emote)
+        EmoteDefinitions:doEmote(emote)
+        self:getMenu():selectedRow(self)
+        self.nav:notifySubs(NavEvent.OnEmote, "MenuRowController:OnClick", emote)
     end
 end
 

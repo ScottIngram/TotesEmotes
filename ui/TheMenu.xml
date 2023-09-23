@@ -67,10 +67,10 @@
     >
     <Size y="20"/>
     <Frames>
-        <Button parentKey="audioBtn">
+        <Button parentKey="audioBtn" frameLevel="5">
             <Size x="20" y="20"/>
             <Anchors>
-                <Anchor point="LEFT" x="0"/>
+                <Anchor point="LEFT" x="5"/>
             </Anchors>
             <Layers>
                 <Layer level="OVERLAY">
@@ -80,16 +80,17 @@
                             <Anchor point="RIGHT" x="0" y="-1"/>
                         </Anchors>
                     </Texture>
-                    <FontString parentKey="text" inherits="GameFontHighlight_NoShadow">
+                    <FontString parentKey="text" inherits="GameFontHighlight_NoShadow" justifyH="LEFT">
                         <Size x="0" y="13"/>
+                        <Color r="1" g="1" b="1" a="0.25"/>
                         <Anchors>
-                            <Anchor point="RIGHT" relativeKey="$parent.icon" relativePoint="LEFT" x="0" y="1"/>
+                            <Anchor point="RIGHT" relativeKey="$parent.icon" relativePoint="LEFT" x="-6" y="1"/>
                         </Anchors>
                     </FontString>
                 </Layer>
             </Layers>
         </Button>
-        <Button parentKey="vizBtn">
+        <Button parentKey="vizBtn" frameLevel ="5">
             <Size x="20" y="20"/>
             <Anchors>
                 <Anchor point="LEFT" relativeKey="$parent.audioBtn" relativePoint="RIGHT" x="4"/>

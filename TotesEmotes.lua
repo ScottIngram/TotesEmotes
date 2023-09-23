@@ -15,6 +15,9 @@ zebug = Zebug:new(Zebug.OUTPUT.TRACE)
 DB = Totes.DB
 L10N = Totes.L10N
 
+---@alias index number
+---@alias key string
+
 -------------------------------------------------------------------------------
 -- Data
 -------------------------------------------------------------------------------
@@ -130,17 +133,12 @@ function initalizeAddonStuff()
 
     theMenu = TheMenu:new()
 
-    emotesTree = EmoteDefinitions:makeCategorizedTree()
-    --emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
-    --theMenu:setEmotes(emotesList)
+    emotesTree = EmoteDefinitions:makeNavigationTree()
     nav = Navigator:new(emotesTree)
     theMenu:setNavSubscriptions(nav)
     theButton:setNavSubscriptions(nav)
 
-    --nav:reset("addon initialization")
-    --nav:throwUpSubMenu(EmoteCat.Combat)
-    --nav:throwUpFlatList(emotesTree)
-    nav:throwUpTopMenu("addon initialization")
+    nav:reset("addon initialization")
 
     -- flags to wait out the chaos happening when the UI first loads / reloads.
     isTotesInitialized = true

@@ -9,17 +9,26 @@
 local ADDON_NAME, Totes = ...
 Totes.Wormhole()
 
----@class NavEvent
+---@enum NavEvent
 NavEvent = {
-    GoNode  = { name="GoNode",  arg1="instigator name", arg2="key", arg3="EmoteDefinition" },
+    Execute = { name="Execute", arg1="instigator name", arg2="NavNode" },
+    GoNode  = { name="GoNode",  arg1="instigator name", arg2="NavNode" },
     OnEmote = { name="OnEmote", arg1="instigator name", arg2="EmoteDefinition" },
     Exit    = { name="Exit",    arg1="string", arg2="?" },
     Reset   = { name="Reset",   arg1="string", arg2="?" },
 }
 
+---@alias NavNodeId number
+
+---@class NavNode
+---@field id NavNodeId if this node is contained within a table, id will be a copy of its key / index
+---@field level number how far down the tree
+---@field parentId NavNodeId the id of the parent NavNode - nil in the case of top level (ie Category) nodes
+---@field domainData DomainData -- somewhere else, type our an annotation like this one ---@alias DomainData EmoteDefinition
+---@field kids table<index,NavNode>
+
 ---@class Navigator
----@field tree EmoteTree a hierarchical, nested set of tables representing a menu of emotes
----@field node table currently selected node: an array of nodeDefs or a single nodeDef
+---@field rootNode NavNode a hierarchical, nested set of tables representing a menu of emotes
 ---@field stack table<number,number|string> -- array of nodeIds representing the path of nodes traversed
 ---@field subscribers table<string,table<function,boolean|string> : <event,list<callback,name>> collection of fuctions to be invoked in case of events
 Navigator = {
@@ -35,36 +44,43 @@ Navigator = {
 -- Methods
 -------------------------------------------------------------------------------
 
----@param treeMenu EmoteTree
-function Navigator:new(treeMenu)
+---@param rootNode NavNode
+function Navigator:new(rootNode)
     ---@type Navigator
     local self = deepcopy(Navigator, {})
     setmetatable(self, { __index = Navigator })
-    self:replaceMenu(treeMenu)
+    self:replaceMenu(rootNode)
     return self
 end
 
----@param treeMenu EmoteTree
-function Navigator:replaceMenu(treeMenu)
-    if treeMenu ~= self.tree then
-        self.tree = treeMenu
-        self.node = self:getTopMenu()
+---@param rootNode NavNode
+function Navigator:replaceMenu(rootNode)
+    if rootNode ~= self.rootNode then
+        self.rootNode = rootNode
+        self.openedNode = rootNode
     end
     for i = #self.stack, 1, -1 do
         self.stack[i] = nil
     end
+    self:push(rootNode)
 end
 
 function Navigator:reset(msg, newTree)
-    self:replaceMenu(newTree or self.tree)
+    self:replaceMenu(newTree or self.rootNode)
     self:notifySubs(NavEvent.Reset, msg or "Reset event came from Navigator:Reset")
     self:throwUpTopMenu()
 end
 
-function Navigator:push(key)
-    self.stack[#self.stack + 1] = key
+function Navigator:getSelectedNode()
+    return self.stack[#self.stack]
 end
 
+---@param navNode NavNode
+function Navigator:push(navNode)
+    self.stack[#self.stack + 1] = navNode
+end
+
+---@return NavNode
 function Navigator:pop()
     local foo
     if #self.stack > 0 then
@@ -74,62 +90,45 @@ function Navigator:pop()
     return foo
 end
 
--- PROOF OF CONCEPT
----@param emoteCat EmoteCat
-function Navigator:throwUpSubMenu(emoteCat)
-    local subMenu = self.tree[emoteCat or EmoteCat.Combat]
-    local emotes = self:convertNamesIntoNodes(subMenu)
-    self:notifySubs(NavEvent.GoNode, "menu for one category", emoteCat, emotes)
-end
-
--- PROOF OF CONCEPT
 function Navigator:throwUpTopMenu()
-    local top = self:getTopMenu()
-    --zebug.warn:dumpy("getTopMenu()", top)
-    self:notifySubs(NavEvent.GoNode, "Go Top!", nil, top)
+    self:notifySubs(NavEvent.GoNode, "Go Top!", self.rootNode)
 end
 
 -- PROOF OF CONCEPT
 function Navigator:throwUpFlatList(emotesTree)
     local emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
     --zebug.warn:dumpy("emotesList",emotesList)
-    self:notifySubs(NavEvent.GoNode, "FlAt", nil, emotesList)
-end
-
-function Navigator:getTopMenu()
-    local list = {}
-    ---@param emoteCat EmoteCat
-    for emoteCat, arrayOfEmoteDefs in ipairs(self.tree) do
-        --zebug.trace:print("i", emoteCat, "arrayOfEmoteDefs", arrayOfEmoteDefs)
-        ---@type EmoteDefinition
-        local row = { cat=emoteCat, name=emoteCat, icon = EmoteCatDef[arrayOfEmoteDefs] and EmoteCatDef[arrayOfEmoteDefs].icon }
-        list[emoteCat] = row
-    end
-    return list
-end
-
-function Navigator:convertNamesIntoNodes(names)
-    local nodes = {}
-    ---@param i EmoteCat
-    for i, name in ipairs(names) do
-        --zebug.trace:print("i", i, "name", name)
-        nodes[i] = EmoteDefinitions.defaults[name]
-    end
-    return nodes
+    self:notifySubs(NavEvent.GoNode, "FlAt", emotesList)
 end
 
 ---@param key string a keystroke
 function Navigator:input(key)
+    local num = tonumber(key) -- TODO: support a-z ?
+    zebug.error:print("key",key, "num",num)
+    if not num then return false end
+    local selectedNode = self:getSelectedNode()
+    local pickedKid = selectedNode.kids[num]
+    pickedKid.id = num
 
+    --zebug.error:dumpy("node",selectedNode)
+    --zebug.error:print("num",num, "pickedKid", pickedKid)
+    --zebug.error:dumpy("emoteDef", pickedKid)
+
+    if pickedKid then
+        self:pickNode(pickedKid)
+        return true
+    end
+    return false
 end
 
----@param emoteDef EmoteDefinition
-function Navigator:pickNode(emoteDef)
-    self:push(emoteDef)
-    local names = self.tree[emoteDef.cat]
-    local emotes = self:convertNamesIntoNodes(names)
-    --zebug.error:dumpy("pickNode list", emotes)
-    self:notifySubs(NavEvent.GoNode, "todo: meaningful info", emoteDef.cat, emotes)
+---@param navNode NavNode
+function Navigator:pickNode(navNode)
+    if navNode.kids then
+        self:push(navNode)
+        self:notifySubs(NavEvent.GoNode, "open node id "..navNode.id, navNode)
+    else
+        self:notifySubs(NavEvent.Execute, "childless node "..navNode.id, navNode)
+    end
 end
 
 function Navigator:goUp()
@@ -142,7 +141,6 @@ function Navigator:goUp()
 end
 
 ---@param event NavEvent
----@return function
 ---@param name string
 function Navigator:subscribe(event, callback, name)
     if not self.subscribers[event] then

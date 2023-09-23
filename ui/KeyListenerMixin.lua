@@ -11,6 +11,12 @@ Totes.Wormhole()
 ---@class KeyListenerMixin
 KeyListenerMixin = {}
 
+---@class KeyListenerResult
+KeyListenerResult = {
+    consumed = true,
+    passedOn = false
+}
+
 function KeyListenerMixin:inject(other)
     for name, func in pairs(KeyListenerMixin) do
         other[name] = func
@@ -28,7 +34,7 @@ function KeyListenerMixin:startKeyListener(onlyWhenMouseOver)
             local propagate = not handled
             self:SetPropagateKeyboardInput(propagate)
         else
-            zebug.trace:print("Ignoring ", key, "self:GetPropagateKeyboardInput", self:GetPropagateKeyboardInput())
+            --zebug.trace:print("Ignoring ", key, "self:GetPropagateKeyboardInput", self:GetPropagateKeyboardInput())
             self:SetPropagateKeyboardInput(true)
         end
         return true
