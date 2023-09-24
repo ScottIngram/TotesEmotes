@@ -53,6 +53,8 @@ function AddonLoadedHandlers:TotesEmotes()
     -- Because: The position of named, movable, user-positioned frames created
     -- before PLAYER_LOGIN is automatically restored by the client from the layout cache when the player logs in.
     zebug.trace:print("Heard event: ADDON_LOADED --> TotesEmotes")
+    DB:initializeProfiles()
+    DB:initializeOptsMemory() -- do this here because it's used by TheButton:new()
     theButton = TheButton:new()
 end
 
@@ -67,22 +69,25 @@ function GLOBAL_TOTES_AddonCompartment_OnClick(addonName, mouseClick)
     if mouseClick == MouseClick.LEFT then
         TheButton:toggle()
     elseif mouseClick == MouseClick.MIDDLE then
-        print("coming soon - open menu!")
+        TheButton:resetPosition()
     else
         Settings.OpenToCategory(Totes.myTitle)
     end
 end
 
+---@type string
 local addonCompartmentToolTip
 function GLOBAL_TOTES_AddonCompartment_OnEnter(addonName, menuButtonFrame)
     zebug.trace:print("addonName",addonName, "menuButtonFrame", menuButtonFrame:GetName())
     GameTooltip:SetOwner(menuButtonFrame, "ANCHOR_LEFT");
     if not addonCompartmentToolTip then
         addonCompartmentToolTip = sprintf(
-                "%s \r\r %s - %s \r %s - %s",
+                "%s \r\r %s - %s \r %s - %s \r %s - %s",
                 ADDON_NAME,
                 zebug.trace:colorize(L10N.LEFT_CLICK),
                 zebug.info:colorize(L10N.TOGGLE_TOTES),
+                zebug.trace:colorize(L10N.MIDDLE_CLICK),
+                zebug.info:colorize(L10N.REPOSITION_TOTES),
                 zebug.trace:colorize(L10N.RIGHT_CLICK),
                 zebug.info:colorize(L10N.OPEN_CONFIG)
         )
@@ -131,8 +136,6 @@ function initalizeAddonStuff()
     _G["BINDING_NAME_CLICK TotesEmotes:TheButton"] = "Toggle "..ADDON_NAME
 
     registerSlashCmd("totes", slashFuncs)
-    DB:initializeProfiles()
-    DB:initializeOptsMemory()
     Config:initializeOptionsMenu()
 
     theMenu = TheMenu:new()

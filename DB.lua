@@ -18,6 +18,7 @@ Totes.DB = DB
 ---@class Options -- IntelliJ-EmmyLua annotation
 ---@field foo boolean placate Bliz security rules of "don't SetAnchor() during combat"
 ---@field bar boolean close the flyout after the user clicks one of its buttons
+---@field isButtonShown boolean remembers if the user has hidden the button or not
 Options = { }
 
 -------------------------------------------------------------------------------
@@ -52,6 +53,7 @@ function DB:getOptionDefaults()
     return {
         foo = true,
         bar = true,
+        buttonShown = true,
     }
 end
 

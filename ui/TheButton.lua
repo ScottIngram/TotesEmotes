@@ -9,11 +9,14 @@
 local ADDON_NAME, Totes = ...
 Totes.Wormhole()
 
----@class TheButton
+---@class TheButtonBase
 ---@field className string "TheMenu"
 ---@field nav Navigator
 ---@field isDragging boolean
----@type TheButton|KeyListenerMixin
+
+---@alias TheButton TheButtonBase|KeyListenerMixin|Frame
+
+---@type TheButton
 TheButton = { className = "TheButton", }
 KeyListenerMixin:inject(TheButton)
 
@@ -32,30 +35,51 @@ local HEIGHT = 30
 -------------------------------------------------------------------------------
 
 function TheButton:new()
+    ---@type TheButton
     local self = CreateFrame("Button", ADDON_NAME.."TheButton", UIParent, "UIPanelButtonTemplate")
+    ---@type TheButton
     TheButton = deepcopy(TheButton, self)
     self:SetPoint("CENTER")
     self:mySetText("Emotes")
---[[
-    btn:SetScript("OnClick", function(self, mouseClick, isDown)
-        print("Pressed", mouseClick, isDown and "down" or "up")
-    end)
-]]
     self:SetScript("OnMouseDown", TheButton.onMouseDown)
     self:SetScript("OnMouseUp", TheButton.onMouseUp)
     self:RegisterForClicks("AnyDown", "AnyUp")
     self:SetMovable(true)
 
-    self:startKeyListener("onlyOnMouseOver")
+    self:restoreVisibility()
+    self:startKeyListener(KeyListenerScope.onlyDuringMouseOver)
 
     return self
 end
 
+-- TODO - store visibility in SAVED_VARS
 function TheButton:toggle()
     if self:IsShown() then
         self:Hide()
+        DB.opts.isButtonShown = false
     else
         self:Show()
+        DB.opts.isButtonShown = true
+    end
+end
+
+function TheButton:resetPosition()
+    self:ClearAllPoints()
+    self:SetPoint("CENTER", UIParent, "CENTER")
+    self:Show()
+    DB.opts.isButtonShown = true
+end
+
+function TheButton:restoreVisibility()
+    -- TODO: fix bug that the menu is also hidden while the button is
+
+    if DB.opts.isButtonShown == nil then
+        DB.opts.isButtonShown = true
+    end
+    if DB.opts.isButtonShown then
+        self:Show()
+    else
+        self:Hide()
     end
 end
 

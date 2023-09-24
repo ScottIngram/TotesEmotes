@@ -9,7 +9,7 @@
 local ADDON_NAME, Totes = ...
 Totes.Wormhole()
 
----@class TheMenu
+---@class TheMenuBase
 ---@field className string "TheMenu"
 ---@field nav Navigator
 ---@field isDragging boolean
@@ -20,7 +20,10 @@ Totes.Wormhole()
 ---@field inset table UI obj from the XML
 ---@field border table UI obj from the XML
 ---@field rowList table<number,MenuRowController> the rows currently displayed (well, the first 10 anyway)
----@type TheMenu|KeyListenerMixin
+
+---@alias TheMenu TheMenuBase|KeyListenerMixin|Frame
+
+---@type TheMenu
 TheMenu = { className = "TheMenu", rowList={}, }
 KeyListenerMixin:inject(TheMenu)
 _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
@@ -84,7 +87,7 @@ function TheMenu:new()
         self:SetMovable(true)
     end
 
-    self:startKeyListener()
+    self:startKeyListener(KeyListenerScope.alwaysWhileVisible)
 
     -- scroll area
     local pad = 0

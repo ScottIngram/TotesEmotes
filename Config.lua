@@ -22,8 +22,10 @@ function Config:new()
     return Object:new(Config)
 end
 
+---@type table
 local optionsMenu
 
+---@return table
 local function initializeOptionsMenu()
     if optionsMenu then
         return optionsMenu
@@ -44,7 +46,7 @@ local function initializeOptionsMenu()
                 order = 100,
                 type = 'description',
                 fontSize = "small",
-                name = "(Shortcut: Right-click the [TOTES] button to open this config menu.)\n\n",
+                name = "Work in progress\n\n",
             },
         }
     }

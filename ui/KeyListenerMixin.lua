@@ -17,13 +17,19 @@ KeyListenerResult = {
     passedOn = false
 }
 
+---@class KeyListenerScope
+KeyListenerScope = {
+    onlyDuringMouseOver = true,
+    alwaysWhileVisible = false,
+}
+
 function KeyListenerMixin:inject(other)
     for name, func in pairs(KeyListenerMixin) do
         other[name] = func
     end
 end
 
----@param onlyWhenMouseOver boolean
+---@param onlyWhenMouseOver? KeyListenerScope
 ---@param self KeyListenerMixin
 function KeyListenerMixin:startKeyListener(onlyWhenMouseOver)
     self:EnableKeyboard(true)
