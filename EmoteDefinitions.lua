@@ -288,7 +288,7 @@ end
 ---@return NavNode one node whose kids array contains all emotes in a 3-level hierarchy: top; catregories; emotes;
 function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
     --@type NavNode
-    local topNode = { level=0, kids={} } -- the return value
+    local topNode = { level=0, kids={}, name="ROOT", } -- the return value
     local cats = topNode.kids
 
     -- in absence of args, set defaults
@@ -355,6 +355,12 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
         if not didIt then
             table.insert(siblings, 1, navNode)
         end
+
+        -- now that the order has bee decided, tell each kid its location
+        ---@param navNode NavNode
+        for i, navNode in ipairs(siblings) do
+            navNode.id = i
+        end
     end
 
     return topNode
@@ -395,7 +401,8 @@ function EmoteDefinitions:convertToNavNode(emoteDef, parentNavNode)
     local domainData = deepcopy(emoteDef,{})
     ---@type NavNode
     local result = {
-        id = emoteDef.name,
+        id = emoteDef.name, -- this will be replaced with an index
+        name = emoteDef.name,
         parentId = parentNavNode and parentNavNode.id,
         level = (parentNavNode and parentNavNode.level and parentNavNode.level+1) or 1, -- start index at 1 - coz Lua is fun!
         domainData = domainData,

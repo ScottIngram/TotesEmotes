@@ -22,6 +22,7 @@ NavEvent = {
 
 ---@class NavNode
 ---@field id NavNodeId if this node is contained within a table, id will be a copy of its key / index
+---@field name string human readable id
 ---@field level number how far down the tree
 ---@field parentId NavNodeId the id of the parent NavNode - nil in the case of top level (ie Category) nodes
 ---@field domainData DomainData -- somewhere else, type our an annotation like this one ---@alias DomainData EmoteDefinition
@@ -29,7 +30,7 @@ NavEvent = {
 
 ---@class Navigator
 ---@field rootNode NavNode a hierarchical, nested set of tables representing a menu of emotes
----@field stack table<number,number|string> -- array of nodeIds representing the path of nodes traversed
+---@field stack table<number,NavNode> -- array of traversed NavNodes
 ---@field subscribers table<string,table<function,boolean|string> : <event,list<callback,name>> collection of fuctions to be invoked in case of events
 Navigator = {
     stack = {},
@@ -68,10 +69,11 @@ end
 function Navigator:reset(msg, newTree)
     self:replaceMenu(newTree or self.rootNode)
     self:notifySubs(NavEvent.Reset, msg or "Reset event came from Navigator:Reset")
-    self:throwUpTopMenu()
+    self:goCurrentNode()
 end
 
-function Navigator:getSelectedNode()
+---@return NavNode
+function Navigator:getCurrentNode()
     return self.stack[#self.stack]
 end
 
@@ -90,8 +92,9 @@ function Navigator:pop()
     return foo
 end
 
-function Navigator:throwUpTopMenu()
-    self:notifySubs(NavEvent.GoNode, "Go Top!", self.rootNode)
+function Navigator:goCurrentNode(msg)
+    local node = self:getCurrentNode()
+    self:notifySubs(NavEvent.GoNode, (msg or "goCurrentNode") .. " level="..((node and node.level)or"nil"), node)
 end
 
 -- PROOF OF CONCEPT
@@ -106,9 +109,9 @@ function Navigator:input(key)
     local num = tonumber(key) -- TODO: support a-z ?
     zebug.info:print("key",key, "num",num)
     if not num then return false end
-    local selectedNode = self:getSelectedNode()
+    local selectedNode = self:getCurrentNode()
     local pickedKid = selectedNode.kids[num]
-    pickedKid.id = num
+    pickedKid.id = num -- required because I didn't assign it earlier
 
     --zebug.error:dumpy("node",selectedNode)
     --zebug.error:print("num",num, "pickedKid", pickedKid)
@@ -132,13 +135,29 @@ function Navigator:pickNode(navNode)
 end
 
 function Navigator:goUp()
-    local level = self:pop()
-    if level then
-        self:throwUpTopMenu("addon initialization")
-    else
-        self:notifySubs(NavEvent.Exit, "goUp")
+    --self:printStack()
+
+    -- don't go higher than the root.  signal "Exit" instead
+    local currentNode = self:getCurrentNode()
+    if currentNode.level == 0 then
+        self:notifySubs(NavEvent.Exit, "goUp already at top")
+        return
     end
+
+    self:pop()
+    self:goCurrentNode()
 end
+
+function Navigator:printStack()
+    zebug.error:line(20,"NAV STACK")
+    for i, navNode in ipairs(self.stack) do
+        local dom = navNode.domainData
+        local name = dom and dom.name or "noname"
+        zebug.error:print("i",i, "id",navNode.id, "level", navNode.level, "name",name)
+    end
+
+end
+
 
 ---@param event NavEvent
 ---@param name string
