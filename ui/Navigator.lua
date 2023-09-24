@@ -104,7 +104,7 @@ end
 ---@param key string a keystroke
 function Navigator:input(key)
     local num = tonumber(key) -- TODO: support a-z ?
-    zebug.error:print("key",key, "num",num)
+    zebug.info:print("key",key, "num",num)
     if not num then return false end
     local selectedNode = self:getSelectedNode()
     local pickedKid = selectedNode.kids[num]

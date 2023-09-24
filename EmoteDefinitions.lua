@@ -312,7 +312,7 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
         local parentName = EmoteCatName[parentId]
         local parentNavNode = lookupTable[parentId]
         if not parentNavNode then
-            zebug.error:line(40,"New Category", parentName)
+            zebug.info:line(40,"New Category", parentName)
             ---@type NavNode
             parentNavNode = {
                 id = parentId,
@@ -327,7 +327,7 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
             }
             cats[parentId] = parentNavNode -- stow it in the results
             lookupTable[parentId] = parentNavNode -- make it easy to find again in later loops
-            zebug.error:dumpy("parent navNode", parentNavNode)
+            zebug.trace:dumpy("parent navNode", parentNavNode)
         end
         local siblings = parentNavNode.kids
 
@@ -406,6 +406,6 @@ end
 ---@param emote EmoteDefinition
 function EmoteDefinitions:doEmote(emote)
     local id = emote.fix or emote.name
-    zebug.error:print("name", emote.name, "fix", emote.fix)
+    zebug.info:print("name", emote.name, "fix", emote.fix)
     DoEmote(id);
 end

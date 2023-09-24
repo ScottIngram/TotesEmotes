@@ -155,7 +155,7 @@ end
 ---@param rowBtn MenuRowController
 ---@param navNode NavNode
 function TheMenu:initializeRowBtn(rowBtn, navNode)
-    zebug.info:print(rowBtn:GetOrderIndex())
+    zebug.trace:print(rowBtn:GetOrderIndex())
     if not rowBtn.getMenu then
         rowBtn.getMenu = function() return self end
         rowBtn.nav = self.nav
@@ -272,9 +272,9 @@ end
 ---@return MenuRowController
 function TheMenu:getRowForNavNode(navNode)
     local n = navNode.id
-    zebug.error:dumpKeys(self.rowList)
+    zebug.trace:dumpKeys(self.rowList)
     local result = self.rowList[n]
-    zebug.error:print("n",n, "result",result)
+    zebug.trace:print("n",n, "result",result)
     return result
 end
 
@@ -284,8 +284,8 @@ end
 
 ---@param navNode NavNode
 function MenuRowController:formatRow(navNode)
-    zebug.error:dumpKeys(navNode)
-    zebug.error:dumpKeys(navNode.domainData)
+    --zebug.trace:dumpKeys(navNode)
+    --zebug.trace:dumpKeys(navNode.domainData)
     self.navNode = navNode
     self.emote = navNode.domainData
     local emote = self.emote
@@ -294,13 +294,14 @@ function MenuRowController:formatRow(navNode)
         self.label:SetText(emote.name)
         self.audioBtn.icon:SetTexture(nil) -- 450908:arrow_right
         self.vizBtn.icon:SetTexture(emote.icon)
-        zebug.error:line(20, "CAT", emote.name, "icon",emote.icon)
+        zebug.trace:line(20, "CAT", emote.name, "icon",emote.icon)
     else
         -- this is an emote
         self.label:SetText(emote.name)
+        -- TODO distinguish between vocalization and sound effect
         self.audioBtn.icon:SetTexture(emote.audio and ICON_AUDIO)
         self.vizBtn.icon:SetTexture(emote.viz and ICON_VIZ)
-        zebug.warn:print("i",i, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
+        zebug.trace:print("cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
     end
 
     -- put a number next to the first 10 rows
@@ -321,7 +322,7 @@ end
 
 function MenuRowController:OnLoad(...)
     -- this doesn't appear to be called
-    zebug.error:name("OnLoad"):print("OnLoad args", ...)
+    zebug.trace:name("OnLoad"):print("OnLoad args", ...)
 end
 
 ---@param mouseClick MouseClick

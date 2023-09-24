@@ -9,7 +9,7 @@
 ---@field myTitle string Totes.toc Title
 local ADDON_NAME, Totes = ...
 Totes.Wormhole() -- Lua voodoo magic that replaces the current Global namespace with the Totes object
-zebug = Zebug:new(Zebug.OUTPUT.TRACE)
+zebug = Zebug:new(Zebug.OUTPUT.WARN)
 
 -- Purely to satisfy my IDE
 DB = Totes.DB
