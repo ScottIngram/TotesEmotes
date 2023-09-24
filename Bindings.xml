@@ -1,0 +1,3 @@
+<Bindings>
+	<Binding name="CLICK TotesEmotesTheButton:LeftButton" header="TotesEmotes" category="AddOns" default="CTRL-/"/>
+</Bindings>
