@@ -199,7 +199,6 @@ function TheMenu:handleKeyPress(key)
                 or convertKeyToIndex(key, DB.opts.quickKeyDash, "-", 11)
                 or convertKeyToIndex(key, DB.opts.quickKeyEqual, "=", 12)
 
-        zebug.error:print("val",val)
         if not val then
             local n = tonumber(key) or 999
             if n <= 9 then
