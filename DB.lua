@@ -16,9 +16,10 @@ local ADDON_NAME, Totes = ...
 Totes.DB = DB
 
 ---@class Options -- IntelliJ-EmmyLua annotation
----@field foo boolean placate Bliz security rules of "don't SetAnchor() during combat"
----@field bar boolean close the flyout after the user clicks one of its buttons
 ---@field isButtonShown boolean remembers if the user has hidden the button or not
+---@field quickKeyBacktick boolean start menu at ~
+---@field quickKeyDash boolean the menu will include - on the end
+---@field quickKeyEqual boolean the menu will include = on the end
 Options = { }
 
 -------------------------------------------------------------------------------
@@ -50,10 +51,13 @@ end
 
 ---@return Options
 function DB:getOptionDefaults()
-    return {
-        foo = true,
-        bar = true,
-        buttonShown = true,
+    --@type Options
+    local defaults = {
+        isButtonShown   = true,
+        quickKeyBacktick  = false,
+        quickKeyDash = true,
+        quickKeyEqual = false,
     }
+    return defaults
 end
 

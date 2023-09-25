@@ -184,7 +184,7 @@ function TheMenu:clearRowList()
 end
 
 -------------------------------------------------------------------------------
--- KetListener Event handlers
+-- KeyListener Event handlers
 -------------------------------------------------------------------------------
 
 ---@return boolean true if consumed: stop propagation!
@@ -195,14 +195,37 @@ function TheMenu:handleKeyPress(key)
         self.nav:goUp()
         return KeyListenerResult.consumed
     else
-        local n = tonumber(key) or 999
-        if n <= 9 then
-            zebug.trace:print("reporting key",key)
-            if n == 0 then n = 10 end
-            return self.nav:input(n)
+        local val = convertKeyToIndex(key, DB.opts.quickKeyBacktick, "`", 0)
+                or convertKeyToIndex(key, DB.opts.quickKeyDash, "-", 11)
+                or convertKeyToIndex(key, DB.opts.quickKeyEqual, "=", 12)
+
+        zebug.error:print("val",val)
+        if not val then
+            local n = tonumber(key) or 999
+            if n <= 9 then
+                zebug.trace:print("reporting key",key)
+                if n == 0 then n = 10 end
+                val = n
+            end
+        end
+
+        if val then
+            val = val + ((DB.opts.quickKeyBacktick and 1) or 0)
+            return self.nav:input(val)
+        end
+
+        return KeyListenerResult.passedOn
+    end
+end
+
+---@return number
+---@param VAL number
+function convertKeyToIndex(key, opt, KEY, VAL)
+    if opt then
+        if key == KEY then
+            return VAL
         end
     end
-    return KeyListenerResult.passedOn
 end
 
 -------------------------------------------------------------------------------
@@ -282,7 +305,7 @@ function TheMenu:getRowForNavNode(navNode)
 end
 
 -------------------------------------------------------------------------------
--- RowController
+-- MenuRowController
 -------------------------------------------------------------------------------
 
 ---@param navNode NavNode
@@ -307,13 +330,34 @@ function MenuRowController:formatRow(navNode)
         zebug.trace:print("cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
     end
 
-    -- put a number next to the first 10 rows
     local n = self:GetOrderIndex()
-    if n <= 10 then
+
+    -- put a number next to the first 10 rows (or more depending on user config opts)
+    local howManyQuickKeys = 10
+            + ((DB.opts.quickKeyBacktick and 1) or 0)
+            + ((DB.opts.quickKeyDash and 1) or 0)
+            + ((DB.opts.quickKeyEqual and 1) or 0)
+    if n <= howManyQuickKeys then
         self:getMenu().rowList[n] = self
-        zebug.trace:print("adding self to rowList",self.emote.name, "at index n",n)
-        n = n==10 and 0 or n
-        self.audioBtn.text:SetText(n)
+
+        local bump = (DB.opts.quickKeyBacktick and 1) or 0
+        ---@type string
+        local display = n - bump
+
+        if display == 10 then
+            display = "0"
+        elseif DB.opts.quickKeyBacktick and display==0 then
+            display = "`"
+        elseif DB.opts.quickKeyDash and display==11 then
+            display = "-"
+        elseif DB.opts.quickKeyEqual and display==12 then
+            display = "="
+            zebug.error:line(40,"EQUAL", "display",display)
+        end
+
+        zebug.trace:print("adding self to rowList",self.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display",display, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
+
+        self.audioBtn.text:SetText(display)
     else
         self.audioBtn.text:SetText(nil)
     end

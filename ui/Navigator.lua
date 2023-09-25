@@ -104,10 +104,9 @@ function Navigator:throwUpFlatList(emotesTree)
     self:notifySubs(NavEvent.GoNode, "FlAt", emotesList)
 end
 
----@param key string a keystroke
-function Navigator:input(key)
-    local num = tonumber(key) -- TODO: support a-z ?
-    zebug.info:print("key",key, "num",num)
+---@param num number
+function Navigator:input(num)
+    zebug.info:print("num",num)
     if not num then return false end
     local selectedNode = self:getCurrentNode()
     local pickedKid = selectedNode.kids[num]

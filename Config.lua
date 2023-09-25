@@ -31,7 +31,7 @@ local function initializeOptionsMenu()
         return optionsMenu
     end
 
-    local opts = Config.opts
+    local opts = DB.opts
 
     optionsMenu = {
         name = Totes.myTitle,
@@ -42,12 +42,74 @@ local function initializeOptionsMenu()
             -- General Options
             -------------------------------------------------------------------------------
 
-            helpText = {
+            introText = {
                 order = 100,
                 type = 'description',
                 fontSize = "small",
-                name = "Work in progress\n\n",
+                name = "All emotes are a few clicks away.",
             },
+
+            -------------------------------------------------------------------------------
+            -- shortcut numbering
+            -------------------------------------------------------------------------------
+
+            quickHeader = {
+                order = 1000,
+                name = "Shortcut Quick Keys",
+                type = 'header',
+            },
+            quickHelp = {
+                order = 1010,
+                type = 'description',
+                name = "The first several emotes in the menu can be triggered via a key-press.  By default, these are: 1, 2, 3, ... 9, and 0",
+            },
+            quickKeyBacktick = {
+                order = 1100,
+                name = "Start with `",
+                desc = "The quick keys will start with the ` before the 1",
+                --width = "full",
+                type = "toggle",
+                set = function(optionsMenu, val)
+                    opts.quickKeyBacktick = val
+                    -- TODO reinit
+                end,
+                get = function()
+                    return opts.quickKeyBacktick
+                end,
+            },
+            quickKeyDash = {
+                order = 1200,
+                name = "Include -",
+                desc = 'The quick keys will include "-" after 0',
+                --width = "full",
+                type = "toggle",
+                set = function(optionsMenu, val)
+                    opts.quickKeyDash = val
+                    -- TODO reinit
+                end,
+                get = function()
+                    return opts.quickKeyDash
+                end,
+            },
+            quickKeyEqual = {
+                order = 1300,
+                name = "Include =",
+                desc = 'The quick keys will include "=" on the end',
+                --width = "full",
+                type = "toggle",
+                set = function(optionsMenu, val)
+                    opts.quickKeyEqual = val
+                    -- TODO reinit
+                end,
+                get = function()
+                    return opts.quickKeyEqual
+                end,
+            },
+
+
+            -------------------------------------------------------------------------------
+            -- Place Holder options
+            -------------------------------------------------------------------------------
         }
     }
 
