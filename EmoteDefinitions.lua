@@ -15,16 +15,18 @@ EmoteDefinitions = {}
 
 ---@class EmoteCat
 EmoteCat = {
-    Happy   = 1,
-    Angry   = 2,
-    Sad     = 3,
-    Neutral = 4,
-    Combat  = 5,
+    Favorites = 1,
+    Happy   = 2,
+    Angry   = 3,
+    Sad     = 4,
+    Neutral = 5,
+    Combat  = 6,
 }
 
 ---@enum EmoteCatDef
 EmoteIcons = {
     [0]                = ICON_TOP_MENU,
+    [EmoteCat.Favorites] = 413589, --3684826:heart-sword, 135767:broken, 1390944:frozen, 413584:star-medal, 413589:now-you-know,
     [EmoteCat.Happy  ] = 237554,
     [EmoteCat.Angry  ] = 237553,
     [EmoteCat.Sad    ] = 237555,
@@ -56,7 +58,7 @@ end
 -------------------------------------------------------------------------------
 
 ---@type table<number, EmoteDefinition>
-EmoteDefinitions.defaults = {
+EmoteDefinitions.list = {
     { name="agree",       cat=EmoteCat.Happy, },
     { name="amaze",       cat=EmoteCat.Happy, },
     { name="angry",       cat=EmoteCat.Angry, viz=true, },
@@ -110,6 +112,7 @@ EmoteDefinitions.defaults = {
     { name="eat",         cat=EmoteCat.Sad, viz=true, },
     { name="excited",     cat=EmoteCat.Happy, viz=true, fix="TALKEX", },
     { name="eye",         cat=EmoteCat.Neutral, },
+    { name="eyeroll",     cat=EmoteCat.Sad, fix="ROLLEYES"},
     { name="facepalm",    cat=EmoteCat.Sad, },
     { name="fart",        cat=EmoteCat.Neutral, }, -- no longer targets players
     { name="fidget",      cat=EmoteCat.Sad, },
@@ -188,7 +191,7 @@ EmoteDefinitions.defaults = {
     { name="regret",      cat=EmoteCat.Sad, },
     { name="roar",        cat=EmoteCat.Angry, viz=true, audio=true, },
     { name="rofl",        cat=EmoteCat.Happy, viz=true, audio=true, },
-    { name="rolleyes",    cat=EmoteCat.Sad, viz=true, },
+    { name="rolleyes",    cat=EmoteCat.Sad, },
     { name="rude",        cat=EmoteCat.Angry, viz=true, },
     { name="salute",      cat=EmoteCat.Happy, viz=true, },
     { name="scared",      cat=EmoteCat.Sad, },
@@ -218,7 +221,7 @@ EmoteDefinitions.defaults = {
     { name="tap",         cat=EmoteCat.Neutral, },
     { name="taunt",       cat=EmoteCat.Angry, },
     { name="tease",       cat=EmoteCat.Happy, },
-    { name="thank",       cat=EmoteCat.Happy, },
+    { name="thank",       cat=EmoteCat.Happy, viz=true, audio=true, },
     { name="think",       cat=EmoteCat.Neutral, },
     { name="thirsty",     cat=EmoteCat.Sad, },
     { name="tickle",      cat=EmoteCat.Happy, },
@@ -239,6 +242,13 @@ EmoteDefinitions.defaults = {
     { name="yawn",        cat=EmoteCat.Sad, audio=true, },
     { name="yw",          cat=EmoteCat.Happy, viz=true, audio=true, },
 }
+
+--@type table<string,EmoteDefinition>
+EmoteDefinitions.map = {}
+
+for i, emote in ipairs(EmoteDefinitions.list) do
+    EmoteDefinitions.map[emote.name] = EmoteDefinitions.list[i]
+end
 
 -------------------------------------------------------------------------------
 -- Utility Functions
@@ -293,11 +303,36 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
 
     -- in absence of args, set defaults
     if not emotes then
-        emotes = EmoteDefinitions.defaults
+        emotes = EmoteDefinitions.list
     end
     if not catOrder then
         catOrder = EmoteCat
     end
+
+    ---@type NavNode
+    local favorites = {
+        id = EmoteCat.Favorites,
+        level = 1,
+        parentId = nil,
+        kids = { },
+        domainData = {
+            cat = EmoteCat.Favorites,
+            name = "Favorites",
+            icon = EmoteIcons[EmoteCat.Favorites],
+        }
+    }
+
+    ---@type EmoteDefinition
+--[[
+    local dummyNode1 = { name="You don't have", cat=EmoteCat.Favorites, fix="cry" }
+    local dummyNode2 = { name="any favorites.", cat=EmoteCat.Favorites, fix="rasp" }
+    local dummyNode3 = { name="Pick some.", cat=EmoteCat.Favorites, fix="cheer" }
+    favorites.kids[1] = self:convertToNavNode(dummyNode1, favorites)
+    favorites.kids[2] = self:convertToNavNode(dummyNode2, favorites)
+    favorites.kids[3] = self:convertToNavNode(dummyNode3, favorites)
+]]
+    cats[EmoteCat.Favorites] = favorites -- stow it in the results
+
 
     ---@type table<index, NavNode>
     local lookupTable = {}
@@ -399,6 +434,7 @@ end
 function EmoteDefinitions:convertToNavNode(emoteDef, parentNavNode)
     ---@type EmoteDefinition
     local domainData = deepcopy(emoteDef,{})
+    --zebug.info:print("parentNavNode.level",parentNavNode.level)
     ---@type NavNode
     local result = {
         id = emoteDef.name, -- this will be replaced with an index

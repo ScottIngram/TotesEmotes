@@ -30,3 +30,5 @@ Angry = "Angry"
 Sad = "Sad"
 Neutral = "Neutral"
 Combat  = "Combat"
+
+CLICK_TO_TOGGLE_FAVORITE = "Click to toggle favorite."

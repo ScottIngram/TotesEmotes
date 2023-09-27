@@ -125,10 +125,10 @@ end
 local next = next
 
 function isTableNotEmpty(table)
-    return table and ( next(table) )
+    return table and ( next(table) ~= nil )
 end
 
-function isEmptyTable(table)
+function isTableEmpty(table)
     return not isTableNotEmpty(table)
 end
 

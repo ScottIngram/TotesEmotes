@@ -34,6 +34,9 @@ _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
 ---@field navNode NavNode
 ---@field nav Navigator
 ---@field label table UI obj from the XML
+---@field audioBtn table UI obj from the XML
+---@field vizBtn table UI obj from the XML
+---@field faveBtn FavoriteButton UI obj from the XML
 MenuRowController = { className = "MenuRowController" }
 _G["TotesTheMenuRowController"] = MenuRowController -- export for use by the XML which will create a new instance of MenuRowController
 
@@ -106,12 +109,9 @@ end
 
 ---@param navNodesList table<index,NavNode>
 function TheMenu:setListing(navNodesList)
-    if true --[[enable for now]] and self.dataProvider then
-        -- Ok, this DOES work now.  -- none of this seems to trigger a refresh... yay complete lack of documentation
+    if self.dataProvider then
         self.dataProvider:Init(navNodesList)
-        --self.dataProvider:Flush()
         self.dataProvider:TriggerEvent(DataProviderMixin.Event.OnSizeChanged, false);
-        --self.listing.scrollBox:SetDataProvider(self.dataProvider)
         self.listing.scrollBox:OnViewDataChanged()
     else
         self.dataProvider = CreateDataProvider(navNodesList)
@@ -162,6 +162,7 @@ function TheMenu:initializeRowBtn(rowBtn, navNode)
     if not rowBtn.getMenu then
         rowBtn.getMenu = function() return self end
         rowBtn.nav = self.nav
+        rowBtn:SetParentKey("btn"..rowBtn:GetOrderIndex())
     end
     rowBtn:formatRow(navNode)
 end
@@ -284,6 +285,14 @@ function TheMenu:handleGoNode(msg, navNode)
     self.header.fontString:SetText(EmoteCatName[key])
     self:setIcon(icon)
     self:clearRowList()
+
+    -- handle special case: Favorites
+    --zebug.error:dumpy("faves", faves)
+    --zebug.error:print("faves isEmpty", isTableEmpty(faves), "key",key, "EmoteCat.Favorites",EmoteCat.Favorites)
+    if key == EmoteCat.Favorites and isTableNotEmpty(DB.opts.faves) then
+        self:generateFavoritesNode(navNode)
+    end
+
     self:setListing(navNode.kids)
 end
 
@@ -292,6 +301,28 @@ function TheMenu:handleExecuteNode(msg, navNode)
     local rowFrame = self:getRowForNavNode(navNode)
     rowFrame:Click()
 end
+
+function TheMenu:generateFavoritesNode(navNode)
+    local names = { }
+    for name, _ in pairs(DB.opts.faves) do
+        names[#names + 1] = name
+    end
+    --zebug.error:dumpy("names", names)
+    table.sort(names)
+    --zebug.error:dumpy("SORTED names", names)
+    --@type table<number, NavNode>
+    local navNodes = {}
+    ---@param name string
+    for i, name in ipairs(names) do
+        local emoteDef = EmoteDefinitions.map[name]
+        local favMenuNode = self.nav.rootNode.kids[EmoteCat.Favorites]
+        local navNode = EmoteDefinitions:convertToNavNode(emoteDef, favMenuNode)
+        navNodes[i] = navNode
+    end
+    --zebug.error:dumpy("navNodes", navNodes)
+    navNode.kids = navNodes
+end
+
 
 ---@param navNode NavNode
 ---@return MenuRowController
@@ -313,6 +344,7 @@ function MenuRowController:formatRow(navNode)
     --zebug.trace:dumpKeys(navNode.domainData)
     self.navNode = navNode
     self.emote = navNode.domainData
+    self.name = navNode.domainData.name
     local emote = self.emote
     if navNode.level == 1 then -- TODO: this feels like a kludge
         -- this is a category
@@ -323,9 +355,9 @@ function MenuRowController:formatRow(navNode)
     else
         -- this is an emote
         self.label:SetText(emote.name)
-        -- TODO distinguish between vocalization and sound effect
         self.audioBtn.icon:SetTexture(emote.audio and ICON_AUDIO)
         self.vizBtn.icon:SetTexture(emote.viz and ICON_VIZ)
+        self.faveBtn:updateDisplay()
         zebug.trace:print("cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
     end
 
@@ -351,7 +383,6 @@ function MenuRowController:formatRow(navNode)
             display = "-"
         elseif DB.opts.quickKeyEqual and display==12 then
             display = "="
-            zebug.error:line(40,"EQUAL", "display",display)
         end
 
         zebug.trace:print("adding self to rowList",self.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display",display, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
@@ -361,10 +392,6 @@ function MenuRowController:formatRow(navNode)
         self.audioBtn.text:SetText(nil)
     end
 end
-
--------------------------------------------------------------------------------
--- XML Event handlers
--------------------------------------------------------------------------------
 
 function MenuRowController:OnLoad(...)
     -- this doesn't appear to be called
@@ -383,5 +410,49 @@ function MenuRowController:OnClick(mouseClick, isDown)
         self.nav:notifySubs(NavEvent.OnEmote, "MenuRowController:OnClick", emote)
     end
 end
+
+-------------------------------------------------------------------------------
+-- Favorite button - stolen from AuctionHouseFavoriteButtonBaseMixin
+-------------------------------------------------------------------------------
+
+---@class FavoriteButton
+FavoriteButton = {}
+_G["TotesFavoriteButtonMixin"] = FavoriteButton
+
+function FavoriteButton:OnEnter()
+    GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+    GameTooltip:SetText(L10N.CLICK_TO_TOGGLE_FAVORITE)
+    GameTooltip:Show();
+end
+
+function FavoriteButton:OnLeave()
+    GameTooltip_Hide();
+end
+
+function FavoriteButton:OnClick()
+    self:toggleIsFavorite()
+    self:updateDisplay()
+end
+
+function FavoriteButton:updateDisplay()
+    local isFavorite = self:isFavorite()
+    local currAtlas = isFavorite and "auctionhouse-icon-favorite" or "auctionhouse-icon-favorite-off"
+    self.NormalTexture:SetAtlas(currAtlas)
+    self.NormalTexture:SetAlpha(isFavorite and 0.8 or 0.2)
+
+    self.HighlightTexture:SetAtlas(currAtlas)
+    --self.HighlightTexture:SetAlpha(0.8)
+end
+
+function FavoriteButton:isFavorite()
+    local name = self:GetParent().name
+    return DB.opts.faves[name]
+end
+
+function FavoriteButton:toggleIsFavorite()
+    local name = self:GetParent().name
+    DB.opts.faves[name] = (not DB.opts.faves[name]) or nil -- don't store false. just erase the true value.
+end
+
 
 

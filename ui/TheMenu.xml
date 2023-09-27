@@ -60,6 +60,17 @@
         </Scripts>
     </Frame>
 
+    <Button name="TotesTemplate_FavoriteButton" mixin="TotesFavoriteButtonMixin" frameStrata="MEDIUM" virtual="true">
+        <Size x="10" y="10"/>
+        <Scripts>
+            <OnClick method="OnClick"/>
+            <OnEnter method="OnEnter"/>
+            <OnLeave method="OnLeave"/>
+        </Scripts>
+        <NormalTexture parentKey="NormalTexture" atlas="auctionhouse-icon-favorite-off"/>
+        <HighlightTexture parentKey="HighlightTexture" atlas="auctionhouse-icon-favorite" alphaMode="ADD"/>
+    </Button>
+
     <Button name = "TotesTemplate_TheMenu_EmoteRow"
             virtual = "true"
             mixin   = "TotesTheMenuRowController"
@@ -111,6 +122,11 @@
                     </FontString>
                 </Layer>
             </Layers>
+        </Button>
+        <Button parentKey="faveBtn" inherits="TotesTemplate_FavoriteButton">
+            <Anchors>
+                <Anchor point="TOPRIGHT" relativePoint="TOPRIGHT" x="-10" y="-5"/>
+            </Anchors>
         </Button>
     </Frames>
     <Layers>
