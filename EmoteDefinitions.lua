@@ -299,7 +299,6 @@ end
 function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
     --@type NavNode
     local topNode = { level=0, kids={}, name="ROOT", } -- the return value
-    local cats = topNode.kids
 
     -- in absence of args, set defaults
     if not emotes then
@@ -309,8 +308,9 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
         catOrder = EmoteCat
     end
 
+    -- Favorites placeholder
     ---@type NavNode
-    local favorites = {
+    topNode.kids[EmoteCat.Favorites] = {
         id = EmoteCat.Favorites,
         level = 1,
         parentId = nil,
@@ -321,18 +321,6 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
             icon = EmoteIcons[EmoteCat.Favorites],
         }
     }
-
-    ---@type EmoteDefinition
---[[
-    local dummyNode1 = { name="You don't have", cat=EmoteCat.Favorites, fix="cry" }
-    local dummyNode2 = { name="any favorites.", cat=EmoteCat.Favorites, fix="rasp" }
-    local dummyNode3 = { name="Pick some.", cat=EmoteCat.Favorites, fix="cheer" }
-    favorites.kids[1] = self:convertToNavNode(dummyNode1, favorites)
-    favorites.kids[2] = self:convertToNavNode(dummyNode2, favorites)
-    favorites.kids[3] = self:convertToNavNode(dummyNode3, favorites)
-]]
-    cats[EmoteCat.Favorites] = favorites -- stow it in the results
-
 
     ---@type table<index, NavNode>
     local lookupTable = {}
@@ -356,11 +344,11 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
                 kids = { },
                 domainData = {
                     cat = emoteDef.cat,
-                    name=parentName,
+                    name = parentName,
                     icon = EmoteIcons[emoteDef.cat]  -- TODO: support custom cats
                 },
             }
-            cats[parentId] = parentNavNode -- stow it in the results
+            topNode.kids[parentId] = parentNavNode -- stow it in the results
             lookupTable[parentId] = parentNavNode -- make it easy to find again in later loops
             zebug.trace:dumpy("parent navNode", parentNavNode)
         end
@@ -389,12 +377,6 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
         end
         if not didIt then
             table.insert(siblings, 1, navNode)
-        end
-
-        -- now that the order has bee decided, tell each kid its location
-        ---@param navNode NavNode
-        for i, navNode in ipairs(siblings) do
-            navNode.id = i
         end
     end
 
@@ -437,10 +419,11 @@ function EmoteDefinitions:convertToNavNode(emoteDef, parentNavNode)
     --zebug.info:print("parentNavNode.level",parentNavNode.level)
     ---@type NavNode
     local result = {
-        id = emoteDef.name, -- this will be replaced with an index
+        id = "UNINITIALIZED", -- this will be replaced with an index
         name = emoteDef.name,
         parentId = parentNavNode and parentNavNode.id,
         level = (parentNavNode and parentNavNode.level and parentNavNode.level+1) or 1, -- start index at 1 - coz Lua is fun!
+        isExe = true,
         domainData = domainData,
     }
     return result

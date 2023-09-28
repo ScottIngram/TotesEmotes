@@ -270,26 +270,27 @@ function TheMenu:setNavSubscriptions(nav)
     self.nav = nav
     nav:subscribe(NavEvent.Exit, function(...) self:toggle() end, self.className)
     ---@param navNode NavNode
-    nav:subscribe(NavEvent.GoNode, function(msg, navNode) self:handleGoNode(msg, navNode) end, self.className)
+    nav:subscribe(NavEvent.OpenNode, function(msg, navNode) self:handleOpenNode(msg, navNode) end, self.className)
     ---@param navNode NavNode
     nav:subscribe(NavEvent.Execute, function(msg, navNode) self:handleExecuteNode(msg, navNode) end, self.className)
 end
 
 ---@param navNode NavNode
-function TheMenu:handleGoNode(msg, navNode)
+function TheMenu:handleOpenNode(msg, navNode)
     local key = navNode.id
     local emoteDef = navNode.domainData
     local isEmote = emoteDef and emoteDef.isEmote
-    zebug.info:name("handleGoNode"):print("msg",msg, "node level", navNode.level, "key",key, "#kids", navNode.kids and #navNode.kids, "isEmote",isEmote)
+    zebug.info:name("handleOpenNode"):print("msg",msg, "node level", navNode.level, "key",key, "#kids", navNode.kids and #navNode.kids, "isEmote",isEmote)
     local icon = emoteDef and emoteDef.icon or ICON_TOP_MENU
     self.header.fontString:SetText(EmoteCatName[key])
     self:setIcon(icon)
     self:clearRowList()
 
     -- handle special case: Favorites
-    --zebug.error:dumpy("faves", faves)
-    --zebug.error:print("faves isEmpty", isTableEmpty(faves), "key",key, "EmoteCat.Favorites",EmoteCat.Favorites)
-    if key == EmoteCat.Favorites and isTableNotEmpty(DB.opts.faves) then
+    local cat = emoteDef and emoteDef.cat
+    zebug.trace:dumpy("faves", DB.opts.faves)
+    zebug.info:print("faves isEmpty", isTableEmpty(DB.opts.faves), "key",key, "EmoteCat.Favorites",EmoteCat.Favorites)
+    if key == EmoteCat.Favorites then
         self:generateFavoritesNode(navNode)
     end
 
@@ -346,7 +347,7 @@ function MenuRowController:formatRow(navNode)
     self.emote = navNode.domainData
     self.name = navNode.domainData.name
     local emote = self.emote
-    if navNode.level == 1 then -- TODO: this feels like a kludge
+    if navNode.kids then
         -- this is a category
         self.label:SetText(emote.name)
         self.audioBtn.icon:SetTexture(nil) -- 450908:arrow_right
@@ -358,7 +359,7 @@ function MenuRowController:formatRow(navNode)
         self.audioBtn.icon:SetTexture(emote.audio and ICON_AUDIO)
         self.vizBtn.icon:SetTexture(emote.viz and ICON_VIZ)
         self.faveBtn:updateDisplay()
-        zebug.trace:print("cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
+        zebug.trace:print("emote",emote.name, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
     end
 
     local n = self:GetOrderIndex()
@@ -402,7 +403,7 @@ end
 function MenuRowController:OnClick(mouseClick, isDown)
     local emote = self.emote
     zebug.trace:name("OnClick"):print("emote",emote.name, "mouseClick",mouseClick, "isDown",isDown)
-    if self.navNode.level == 1 then --TODO: this feels like a kludge
+    if self.navNode.kids then
         self.nav:pickNode(self.navNode)
     else
         EmoteDefinitions:doEmote(emote)

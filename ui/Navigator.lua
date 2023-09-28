@@ -12,7 +12,7 @@ Totes.Wormhole()
 ---@enum NavEvent
 NavEvent = {
     Execute = { name="Execute", arg1="instigator name", arg2="NavNode" },
-    GoNode  = { name="GoNode",  arg1="instigator name", arg2="NavNode" },
+    OpenNode= { name="OpenNode",  arg1="instigator name", arg2="NavNode" },
     OnEmote = { name="OnEmote", arg1="instigator name", arg2="EmoteDefinition" },
     Exit    = { name="Exit",    arg1="string", arg2="?" },
     Reset   = { name="Reset",   arg1="string", arg2="?" },
@@ -26,7 +26,9 @@ NavEvent = {
 ---@field level number how far down the tree
 ---@field parentId NavNodeId the id of the parent NavNode - nil in the case of top level (ie Category) nodes
 ---@field domainData DomainData -- somewhere else, type our an annotation like this one ---@alias DomainData EmoteDefinition
----@field kids table<index,NavNode>
+---@field kids table<index,NavNode> -- should be handled as a NavEvent.OpenNode
+---@field isExe boolean should be handled as a NavEvent.Execute (perhaps in addition to NavEvent.OpenNode?)
+
 
 ---@class Navigator
 ---@field rootNode NavNode a hierarchical, nested set of tables representing a menu of emotes
@@ -69,7 +71,7 @@ end
 function Navigator:reset(msg, newTree)
     self:replaceMenu(newTree or self.rootNode)
     self:notifySubs(NavEvent.Reset, msg or "Reset event came from Navigator:Reset")
-    self:goCurrentNode()
+    self:goCurrentNode("Reset")
 end
 
 ---@return NavNode
@@ -94,14 +96,15 @@ end
 
 function Navigator:goCurrentNode(msg)
     local node = self:getCurrentNode()
-    self:notifySubs(NavEvent.GoNode, (msg or "goCurrentNode") .. " level="..((node and node.level)or"nil"), node)
+    self:broadcastNode(msg, node)
 end
 
--- PROOF OF CONCEPT
-function Navigator:throwUpFlatList(emotesTree)
-    local emotesList = EmoteDefinitions:flattenTreeIntoList(emotesTree)
-    --zebug.warn:dumpy("emotesList",emotesList)
-    self:notifySubs(NavEvent.GoNode, "FlAt", emotesList)
+function Navigator:broadcastNode(msg, node)
+    -- tell each kid what its index is... useful when filters are dynamically changing the contents
+    for i, kidNode in ipairs(node.kids) do
+        kidNode.id = i
+    end
+    self:notifySubs(NavEvent.OpenNode, (msg or "goCurrentNode") .. " level="..((node and node.level)or"nil"), node)
 end
 
 ---@param num number
@@ -127,7 +130,7 @@ end
 function Navigator:pickNode(navNode)
     if navNode.kids then
         self:push(navNode)
-        self:notifySubs(NavEvent.GoNode, "open node id "..navNode.id, navNode)
+        self:goCurrentNode("pick node id "..navNode.id)
     else
         self:notifySubs(NavEvent.Execute, "childless node "..navNode.id, navNode)
     end
@@ -144,7 +147,7 @@ function Navigator:goUp()
     end
 
     self:pop()
-    self:goCurrentNode()
+    self:goCurrentNode("Go Up!")
 end
 
 function Navigator:printStack()
