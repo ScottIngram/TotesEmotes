@@ -107,16 +107,15 @@ function TheMenu:new()
     return self
 end
 
----@param navNodesList table<index,NavNode>
 function TheMenu:setListing(navNodesList)
-    if self.dataProvider then
-        self.dataProvider:Init(navNodesList)
-        self.dataProvider:TriggerEvent(DataProviderMixin.Event.OnSizeChanged, false);
-        self.listing.scrollBox:OnViewDataChanged()
-    else
+    if not self.dataProvider then
         self.dataProvider = CreateDataProvider(navNodesList)
         self.listing.scrollBox:SetDataProvider(self.dataProvider)
     end
+
+    self.dataProvider:Flush()
+    self.dataProvider:InsertTable(navNodesList)
+    self.listing.scrollBox:OnViewDataChanged()
 end
 
 function TheMenu:toggle()
@@ -277,20 +276,19 @@ end
 
 ---@param navNode NavNode
 function TheMenu:handleOpenNode(msg, navNode)
-    local key = navNode.id
+    local id = navNode.id
     local emoteDef = navNode.domainData
     local isEmote = emoteDef and emoteDef.isEmote
-    zebug.info:name("handleOpenNode"):print("msg",msg, "node level", navNode.level, "key",key, "#kids", navNode.kids and #navNode.kids, "isEmote",isEmote)
+    zebug.info:name("handleOpenNode"):print("msg",msg, "node level", navNode.level, "id", id, "#kids", navNode.kids and #navNode.kids, "isEmote",isEmote)
     local icon = emoteDef and emoteDef.icon or ICON_TOP_MENU
-    self.header.fontString:SetText(EmoteCatName[key])
+    self.header.fontString:SetText(EmoteCatName[id])
     self:setIcon(icon)
     self:clearRowList()
 
     -- handle special case: Favorites
-    local cat = emoteDef and emoteDef.cat
     zebug.trace:dumpy("faves", DB.opts.faves)
-    zebug.info:print("faves isEmpty", isTableEmpty(DB.opts.faves), "key",key, "EmoteCat.Favorites",EmoteCat.Favorites)
-    if key == EmoteCat.Favorites then
+    zebug.info:print("faves isEmpty", isTableEmpty(DB.opts.faves), "key", id, "EmoteCat.Favorites",EmoteCat.Favorites)
+    if id == EmoteCat.Favorites then
         self:generateFavoritesNode(navNode)
     end
 
