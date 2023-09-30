@@ -16,9 +16,11 @@ NavEvent = {
     OnEmote = { name="OnEmote", arg1="instigator name", arg2="EmoteDefinition" },
     Exit    = { name="Exit",    arg1="string", arg2="?" },
     Reset   = { name="Reset",   arg1="string", arg2="?" },
+    SearchStringChange = { name="SearchStringChange", arg1="instigator name", arg2="the new search string" },
 }
 
 ---@alias NavNodeId number
+---@alias SearchIndex table<string,list<number,NavNode>
 
 ---@class NavNode
 ---@field id NavNodeId if this node is contained within a table, id will be a copy of its key / index
@@ -28,7 +30,29 @@ NavEvent = {
 ---@field domainData DomainData -- somewhere else, type our an annotation like this one ---@alias DomainData EmoteDefinition
 ---@field kids table<index,NavNode> -- should be handled as a NavEvent.OpenNode
 ---@field isExe boolean should be handled as a NavEvent.Execute (perhaps in addition to NavEvent.OpenNode?)
+---@field searchIndex SearchIndex all of the kids names chopped up and indexed
+---@field searchIndexProxy EmoteCat a kid node whose searchIndex should be used instead
+---@field isSearchResult boolean
 
+-- Example. searchIndex
+local exampleSearchIndex = {
+    ["a"] = { -- any kid with an "a" anywhere
+        "nodeObjFor:agree", "nodeObjFor:amaze", "nodeObjFor:angry", -- etc.
+        "nodeObjFor:bArk",  "nodeObjFor:bAshful", -- etc.
+        "nodeObjFor:brAndish", -- etc.
+        "nodeObjFor:whoA", -- etc. etc etc
+    },
+    ["ag"] = { -- any kid with an "ag" anywhere
+        "nodeObjFor:AGree", "nodeObjFor:mAGnificent", "nodeObjFor:massAGe",
+    },
+    ["agr"] = { "nodeObjFor:agree", },
+    ["agre"] = { "nodeObjFor:agree", },
+    ["agree"] = { "nodeObjFor:agree", },
+    ["am & ama & amaz & amaze"] = { "nodeObjFor:amaze", },  -- etc etc etc
+    ["an"] = {   -- any kid with an "an" anywhere
+        "nodeObjFor:angry", "nodeObjFor:brandish", "nodeObjFor:dance", -- etc
+    },
+}
 
 ---@class Navigator
 ---@field rootNode NavNode a hierarchical, nested set of tables representing a menu of emotes
@@ -68,6 +92,7 @@ function Navigator:replaceMenu(rootNode)
     self:push(rootNode)
 end
 
+---@param newTree? NavNode
 function Navigator:reset(msg, newTree)
     self:replaceMenu(newTree or self.rootNode)
     self:notifySubs(NavEvent.Reset, msg or "Reset event came from Navigator:Reset")
@@ -84,6 +109,11 @@ function Navigator:push(navNode)
     self.stack[#self.stack + 1] = navNode
 end
 
+---@param navNode NavNode
+function Navigator:replaceCurrentNode(navNode)
+    self.stack[#self.stack] = navNode
+end
+
 ---@return NavNode
 function Navigator:pop()
     local foo
@@ -96,10 +126,21 @@ end
 
 function Navigator:goCurrentNode(msg)
     local node = self:getCurrentNode()
-    self:broadcastNode(msg, node)
+    self:goNode(msg, node)
 end
 
-function Navigator:broadcastNode(msg, node)
+function Navigator:goSearchResults(matches)
+    local originalNode = self:getCurrentNode()
+    local newNavNode = self:convertSearchResultsIntoNode(matches, originalNode)
+    if originalNode.isSearchResult then
+        self:replaceCurrentNode(newNavNode)
+    else
+        self:push(newNavNode)
+    end
+    self:goCurrentNode("search results")
+end
+
+function Navigator:goNode(msg, node)
     -- tell each kid what its index is... useful when filters are dynamically changing the contents
     for i, kidNode in ipairs(node.kids) do
         kidNode.id = i
@@ -107,23 +148,144 @@ function Navigator:broadcastNode(msg, node)
     self:notifySubs(NavEvent.OpenNode, (msg or "goCurrentNode") .. " level="..((node and node.level)or"nil"), node)
 end
 
+---@return NavNode
+---@param originalNode NavNode
+function Navigator:convertSearchResultsIntoNode(matches, originalNode)
+    ---@type NavNode
+    local result = {
+        id = originalNode.id,
+        name = self.searchString,
+        level = originalNode.level + 1,
+        kids = matches or {},
+        parentId = EmoteCat.Everything,
+        domainData = originalNode.domainData,
+        searchIndex = originalNode.searchIndex,
+        searchIndexProxy = originalNode.searchIndexProxy,
+        isSearchResult = true,
+    }
+    return result
+end
+
+
+---@return boolean true if consumed: stop propagation!
+function Navigator:handleKeyPress(key)
+    -- assume Bliz consistently provides key in all upper case... ROFLMAO!!!
+    -- Is Bliz EVER consistent about ANYTHING?!?!   OMG, good one!!!  Tears!  Tears streaming from my eyes!
+    key = string.upper(key)
+
+    -- the escape key exits the current level and goes up one... and the LEFT and UP keys too, why not?
+    if key == "ESCAPE" or key == "LEFT" or key == "UP" or (key == "BACKSPACE" and not self.searchString) then
+        self:goUp()
+        return KeyListenerResult.consumed
+    end
+
+    local keyAsNumber = tonumber(key)
+    if keyAsNumber then
+        zebug.trace:print("found number",key, "is", keyAsNumber)
+        if keyAsNumber == 0 then keyAsNumber = 10 end
+    end
+
+    if not keyAsNumber then
+        -- is the key equivalent to a number ?
+        keyAsNumber = convertKeyToIndex(key, DB.opts.quickKeyBacktick, "`", 0)
+                or convertKeyToIndex(key, DB.opts.quickKeyDash, "-", 11)
+                or convertKeyToIndex(key, DB.opts.quickKeyEqual, "=", 12)
+        zebug.trace:print("convertKeyToIndex key",key, "as number?", keyAsNumber)
+    end
+
+    if keyAsNumber then
+        zebug.trace:print("handling number key", keyAsNumber)
+        keyAsNumber = keyAsNumber + ((DB.opts.quickKeyBacktick and 1) or 0)
+        return self:inputNumber(keyAsNumber)
+    end
+
+    zebug.trace:print("IT'S...", key)
+
+    local word
+    if string.match(key, '^[a-zA-Z]$') then
+        word = self:pushLetter(key)
+    elseif key == "DELETE" or key == "BACKSPACE" then
+        word = self:popLetter()
+    elseif key == "ENTER" then
+        return self:inputNumber(1) -- treat enter the same as pressing the "1" key
+    end
+
+    zebug.trace:print("word", word)
+    if exists(word) then
+        local matches = self:search(word)
+        if not matches then
+            -- self:popLetter() -- remove the last letter
+        end
+        self:goSearchResults(matches)
+        return KeyListenerResult.consumed
+    else
+        local x = self:getCurrentNode()
+        if x.isSearchResult then
+            self:pop()
+            self:goCurrentNode("search text cleared")
+        end
+    end
+
+    return KeyListenerResult.passedOn
+end
+
+---@param c string a single letter
+---@return string the word formed by all input letters
+function Navigator:pushLetter(c)
+    c = string.lower(c)
+    if self.searchString then
+        self.searchString = self.searchString .. c
+    else
+        self.searchString = c
+    end
+    self:broadcastSearchStringChange("added "..c)
+    return self.searchString
+end
+
+---@return string the word formed by all input letters minus the last one
+function Navigator:popLetter()
+    if self.searchString then
+        self.searchString = string.sub(self.searchString, 1, -2)
+        if string.len(self.searchString) == 0 then
+            self.searchString = nil
+        end
+    end
+    self:broadcastSearchStringChange("popped")
+    return self.searchString
+end
+
+function Navigator:nukeSearchString()
+    self.searchString = nil
+    self:broadcastSearchStringChange("nuked")
+end
+
+function Navigator:broadcastSearchStringChange(msg)
+    self:notifySubs(NavEvent.SearchStringChange, msg or "googly do!", self.searchString)
+end
+
+---@return number
+---@param VAL number
+function convertKeyToIndex(key, opt, KEY, VAL)
+    if opt then
+        if key == KEY then
+            return VAL
+        end
+    end
+end
+
 ---@param num number
-function Navigator:input(num)
+---@return boolean true if consumed: stop propagation!
+function Navigator:inputNumber(num)
     zebug.info:print("num",num)
     if not num then return false end
     local selectedNode = self:getCurrentNode()
     local pickedKid = selectedNode.kids[num]
-    pickedKid.id = num -- required because I didn't assign it earlier
-
-    --zebug.error:dumpy("node",selectedNode)
-    --zebug.error:print("num",num, "pickedKid", pickedKid)
-    --zebug.error:dumpy("emoteDef", pickedKid)
-
     if pickedKid then
+        pickedKid.id = num -- is this still needed?
         self:pickNode(pickedKid)
-        return true
+        return KeyListenerResult.consumed
     end
-    return false
+    return KeyListenerResult.passedOn
 end
 
 ---@param navNode NavNode
@@ -136,7 +298,65 @@ function Navigator:pickNode(navNode)
     end
 end
 
+---@param word string
+---@return table<number,NavNode> the NavNodes corresponding to all emotes that match the search word
+function Navigator:search(word)
+    local navNode = self:getCurrentNode()
+
+    if navNode.searchIndexProxy then
+        navNode = self.rootNode.kids[navNode.searchIndexProxy]
+    end
+
+    local searchIndex = navNode.searchIndex
+    if not searchIndex then
+        navNode.searchIndex = self:createSearchIndex(navNode)
+    end
+
+    local matches = navNode.searchIndex[word]
+    zebug.trace:dumpy("matches",matches)
+
+    return matches
+end
+
+---@param navNode NavNode
+---@return SearchIndex -- <string,list<number,NavNode>
+function Navigator:createSearchIndex(navNode)
+    local searchIndex = {}
+
+    -- iterate over every kid, chop up its name, and index the pieces
+    ---@param kidNode NavNode
+    for kidN, kidNode in ipairs(navNode.kids) do
+        local alreadyIndexedFor = {}
+        local name = kidNode.domainData.name
+        zebug.trace:line(10, "kidN",kidN, "name",name)
+        local len = string.len(name)
+        for i = 1, len do
+            -- take "clap" and chop it into c,cl,cla,clap... then l,la,lap... then a,ap... then p.
+            for j = i, len do
+                local subStr = string.sub(name, i, j)
+                zebug.trace:print("subStr",subStr)
+                local subStrings = searchIndex[subStr]
+                if not subStrings then
+                    subStrings = {}
+                    searchIndex[subStr] = subStrings
+                end
+                if not alreadyIndexedFor[subStr] then
+                    subStrings[#subStrings + 1] = kidNode -- { "c" = { "clap's NavNode"  }  }
+                    alreadyIndexedFor[subStr] = true -- prevent the case of "eye" getting indexed under "e" twice
+                end
+            end
+        end
+    end
+
+    zebug.trace:dumpy("searchIndex",searchIndex)
+
+    return searchIndex
+end
+
+
 function Navigator:goUp()
+    self:nukeSearchString()
+
     --self:printStack()
 
     -- don't go higher than the root.  signal "Exit" instead

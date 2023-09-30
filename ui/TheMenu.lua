@@ -23,7 +23,7 @@ Totes.Wormhole()
 
 ---@alias TheMenu TheMenuBase|KeyListenerMixin|Frame
 
----@type TheMenu
+---@type TheMenuBase
 TheMenu = { className = "TheMenu", rowList={}, }
 KeyListenerMixin:inject(TheMenu)
 _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
@@ -189,42 +189,7 @@ end
 
 ---@return boolean true if consumed: stop propagation!
 function TheMenu:handleKeyPress(key)
-    if key == "ESCAPE" then
-        zebug.trace:print("handling Escape")
-        self:selectedRow(nil)
-        self.nav:goUp()
-        return KeyListenerResult.consumed
-    else
-        local val = convertKeyToIndex(key, DB.opts.quickKeyBacktick, "`", 0)
-                or convertKeyToIndex(key, DB.opts.quickKeyDash, "-", 11)
-                or convertKeyToIndex(key, DB.opts.quickKeyEqual, "=", 12)
-
-        if not val then
-            local n = tonumber(key) or 999
-            if n <= 9 then
-                zebug.trace:print("reporting key",key)
-                if n == 0 then n = 10 end
-                val = n
-            end
-        end
-
-        if val then
-            val = val + ((DB.opts.quickKeyBacktick and 1) or 0)
-            return self.nav:input(val)
-        end
-
-        return KeyListenerResult.passedOn
-    end
-end
-
----@return number
----@param VAL number
-function convertKeyToIndex(key, opt, KEY, VAL)
-    if opt then
-        if key == KEY then
-            return VAL
-        end
-    end
+    return self.nav:handleKeyPress(key)
 end
 
 -------------------------------------------------------------------------------
@@ -267,22 +232,29 @@ end
 ---@param nav Navigator
 function TheMenu:setNavSubscriptions(nav)
     self.nav = nav
-    nav:subscribe(NavEvent.Exit, function(...) self:toggle() end, self.className)
+    nav:subscribe(NavEvent.Exit, function() self:handleNavExit() end, self.className)
     ---@param navNode NavNode
-    nav:subscribe(NavEvent.OpenNode, function(msg, navNode) self:handleOpenNode(msg, navNode) end, self.className)
+    nav:subscribe(NavEvent.OpenNode, function(msg, navNode) self:handleNavOpenNode(msg, navNode) end, self.className)
     ---@param navNode NavNode
-    nav:subscribe(NavEvent.Execute, function(msg, navNode) self:handleExecuteNode(msg, navNode) end, self.className)
+    nav:subscribe(NavEvent.Execute, function(msg, navNode) self:handleNavExecuteNode(msg, navNode) end, self.className)
+end
+
+function TheMenu:handleNavExit()
+    self:selectedRow(nil)
+    self:toggle()
 end
 
 ---@param navNode NavNode
-function TheMenu:handleOpenNode(msg, navNode)
+function TheMenu:handleNavOpenNode(msg, navNode)
     local id = navNode.id
     local emoteDef = navNode.domainData
     local isEmote = emoteDef and emoteDef.isEmote
     zebug.info:name("handleOpenNode"):print("msg",msg, "node level", navNode.level, "id", id, "#kids", navNode.kids and #navNode.kids, "isEmote",isEmote)
     local icon = emoteDef and emoteDef.icon or ICON_TOP_MENU
-    self.header.fontString:SetText(EmoteCatName[id])
+    local label = navNode.name or EmoteCatName[id]
+    self.header.fontString:SetText(label)
     self:setIcon(icon)
+    self:selectedRow(nil)
     self:clearRowList()
 
     -- handle special case: Favorites
@@ -296,7 +268,7 @@ function TheMenu:handleOpenNode(msg, navNode)
 end
 
 ---@param navNode NavNode
-function TheMenu:handleExecuteNode(msg, navNode)
+function TheMenu:handleNavExecuteNode(msg, navNode)
     local rowFrame = self:getRowForNavNode(navNode)
     rowFrame:Click()
 end

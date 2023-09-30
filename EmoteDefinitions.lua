@@ -21,6 +21,7 @@ EmoteCat = {
     Sad     = 4,
     Neutral = 5,
     Combat  = 6,
+    Everything = 7,
 }
 
 ---@enum EmoteCatDef
@@ -32,6 +33,7 @@ EmoteIcons = {
     [EmoteCat.Sad    ] = 237555,
     [EmoteCat.Neutral] = 237552,
     [EmoteCat.Combat ] = 132147, -- 132147:swords, 458724:target,
+    [EmoteCat.Everything] = 4630359, -- 1033987:shield+100, 4630359:color-swirl,
 }
 
 ---@type table<number,string>
@@ -50,8 +52,6 @@ end
 ---@field isEmote boolean does this entry represent a category instead of an actual emote
 
 ---@alias DomainData EmoteDefinition
-
--- TODO: distinguish between vocal and sound effect - icon 135735:arcane_blast
 
 ----------------------------------------------------------------------------------
 -- Data
@@ -105,6 +105,7 @@ EmoteDefinitions.list = {
     { name="curtsey",     cat=EmoteCat.Happy, viz=true, },
     { name="dance",       cat=EmoteCat.Happy, viz=true, },
     { name="ding",        cat=EmoteCat.Happy, },
+    { name="doh",         cat=EmoteCat.Angry, },
     { name="doom",        cat=EmoteCat.Angry, audio=true, fix="THREATEN", },
     { name="drink",       cat=EmoteCat.Happy, viz=true, },
     { name="drool",       cat=EmoteCat.Sad, },
@@ -140,10 +141,12 @@ EmoteDefinitions.list = {
     { name="healme",      cat=EmoteCat.Combat, viz=true, audio=true, },
     { name="hello",       cat=EmoteCat.Happy, viz=true, audio=true, },
     { name="helpme",      cat=EmoteCat.Combat, viz=true, audio=true, },
+    { name="hi",          cat=EmoteCat.Happy, viz=true, audio=true,  fix="HELLO",},
     { name="highfive",    cat=EmoteCat.Happy, },
     { name="holdhand",    cat=EmoteCat.Happy, },
     { name="hug",         cat=EmoteCat.Happy, },
     { name="hungry",      cat=EmoteCat.Sad, },
+    { name="hurry",       cat=EmoteCat.Angry, },
     { name="huzzah",      cat=EmoteCat.Happy, viz=true, },
     { name="impressed",   cat=EmoteCat.Happy, viz=true, audio=true, },
     { name="incoming",    cat=EmoteCat.Combat, viz=true, audio=true, },
@@ -293,12 +296,13 @@ end
 -- take the incoming raw list of emotes and
 -- sort them into categories,
 -- each of which further sort the emotes alphabetically but preferring emotes with audio and/or viz as per compare(a,b)
----@param emotes table<number,EmoteDefinition>
----@param catOrder EmoteCat
+---@param emotes? table<number,EmoteDefinition>
+---@param catOrder? EmoteCat
 ---@return NavNode one node whose kids array contains all emotes in a 3-level hierarchy: top; catregories; emotes;
 function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
     --@type NavNode
-    local topNode = { level=0, kids={}, name="ROOT", } -- the return value
+    local topNode = { level=0, kids={}, name="", searchIndexProxy=EmoteCat.Everything } -- the return value
+    local flatList = {}
 
     -- in absence of args, set defaults
     if not emotes then
@@ -361,26 +365,47 @@ function EmoteDefinitions:makeNavigationTree(emotes, catOrder)
         zebug.trace:print("emote", emoteDef.name, "level", navNode.level, "cat", parentName, "cat size",#siblings)
         --zebug.warn:dumpy("emote navNode", navNode)
 
-        -- insert the unsortedName into the correct spot in the siblings array.
-        -- be optimistic and hope the original list is already sorted.
-        -- in which case, each new item will follow the previous one
-        -- so, search from the end of the sorted array backwards to reduce the number of loops.
-        local didIt = false
-        for i=#siblings, 1, -1 do
-            local emoteDefB = siblings[i].domainData
-            local x = compare(emoteDef, emoteDefB)
-            if (x == Comparison.aAfterB) or (x == Comparison.aSameAsB) then
-                table.insert(siblings, i+1, navNode)
-                didIt = true
-                break
-            end
-        end
-        if not didIt then
-            table.insert(siblings, 1, navNode)
+        insertNewRow(siblings, navNode)
+        insertNewRow(flatList, navNode)
+    end
+
+    topNode.kids[EmoteCat.Everything] = {
+        id = EmoteCat.Everything,
+        level = 1,
+        parentId = nil,
+        kids = flatList,
+        domainData = {
+            cat = EmoteCat.Everything,
+            name = "Everything",
+            icon = EmoteIcons[EmoteCat.Everything],
+        }
+    }
+
+    return topNode
+end
+
+---@param siblings table<number,NavNode>
+---@param navNode NavNode
+function insertNewRow(siblings, navNode)
+    -- insert the unsortedName into the correct spot in the siblings array.
+    -- be optimistic and hope the original list is already sorted.
+    -- in which case, each new item will follow the previous one
+    -- so, search from the end of the sorted array backwards to reduce the number of loops.
+    local didIt = false
+    local emoteDef_A = navNode.domainData
+    for i=#siblings, 1, -1 do
+        local emoteDef_B = siblings[i].domainData
+        local x = compare(emoteDef_A, emoteDef_B)
+        if (x == Comparison.aAfterB) or (x == Comparison.aSameAsB) then
+            table.insert(siblings, i+1, navNode)
+            didIt = true
+            break
         end
     end
 
-    return topNode
+    if not didIt then
+        table.insert(siblings, 1, navNode)
+    end
 end
 
 ---@param navNode NavNode

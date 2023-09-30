@@ -106,6 +106,20 @@ local function initializeOptionsMenu()
                 end,
             },
 
+            -------------------------------------------------------------------------------
+            -- Autocomplete
+            -------------------------------------------------------------------------------
+
+            everythingHeader = {
+                order = 2000,
+                name = "Autocomplete",
+                type = 'header',
+            },
+            everythingHelp = {
+                order = 2010,
+                type = 'description',
+                name = "While the menu is open, typing in a word will trigger a search for matching emotes.",
+            },
 
             -------------------------------------------------------------------------------
             -- Place Holder options
