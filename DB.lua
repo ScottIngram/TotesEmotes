@@ -8,7 +8,16 @@
 -- there is no call to Wormhole() so we're in the global namespace, NOT in the Totes !
 -------------------------------------------------------------------------------
 
+---@class position
+---@field point string
+---@field relativeToFrameName string
+---@field relativePoint string
+---@field xOffset number
+---@field yOffset number
+
 ---@class DB
+---@field opts table
+---@field theButtonPos position coordinates for the button
 local DB = {}
 
 ---@type TotesEmotes
@@ -62,4 +71,17 @@ function DB:getOptionDefaults()
     }
     return defaults
 end
+
+-------------------------------------------------------------------------------
+-- Button Position
+-------------------------------------------------------------------------------
+
+function DB:initializeButtonMemory()
+    if not TOTES_BTN_COORDS then
+        TOTES_BTN_COORDS = { }
+    end
+
+    DB.theButtonPos = TOTES_BTN_COORDS
+end
+
 

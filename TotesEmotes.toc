@@ -7,6 +7,7 @@
 ## AddonCompartmentFuncOnLeave: GLOBAL_TOTES_AddonCompartment_OnLeave
 ## IconTexture: 2056011
 ## SavedVariables: TOTES_OPTS, TOTES_PROFILES
+## SavedVariablesPerCharacter: TOTES_BTN_COORDS
 ## Notes: menu of emotes
 
 libs\libs.xml

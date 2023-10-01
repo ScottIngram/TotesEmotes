@@ -43,9 +43,13 @@ function TheButton:new()
     self:mySetText("Emotes")
     self:SetScript("OnMouseDown", TheButton.onMouseDown)
     self:SetScript("OnMouseUp", TheButton.onMouseUp)
+    self:SetScript("OnDragStart", TheButton.onDragStart)
+    self:SetScript("OnDragStop", TheButton.onDragStop)
     self:RegisterForClicks("AnyDown", "AnyUp")
+    self:RegisterForDrag("LeftButton")
     self:SetMovable(true)
 
+    self:restorePositionFromDb()
     self:restoreVisibility()
     self:startKeyListener(KeyListenerScope.onlyDuringMouseOver)
 
@@ -61,13 +65,6 @@ function TheButton:toggle()
         self:Show()
         DB.opts.isButtonShown = true
     end
-end
-
-function TheButton:resetPosition()
-    self:ClearAllPoints()
-    self:SetPoint("CENTER", UIParent, "CENTER")
-    self:Show()
-    DB.opts.isButtonShown = true
 end
 
 function TheButton:restoreVisibility()
@@ -95,34 +92,55 @@ function TheButton:onMouseDown(mouseClick)
     self:SetFrameLevel(9) -- one below inventory bags
 
     if mouseClick == MouseClick.LEFT then
-        self.isDragging = true
-        self:StartMoving()
         theMenu:toggle()
-    end
-    zebug.trace:print("onMouseDown", mouseClick)
-end
-
-function TheButton:activateDrag()
-    if mouseClick == MouseClick.LEFT then
-        self.mouseX, self.mouseY = GetCursorPosition()
-        self.isDragging = true
-        self:StartMoving()
     end
     zebug.trace:print("onMouseDown", mouseClick)
 end
 
 ---@param mouseClick MouseClick
 function TheButton:onMouseUp(mouseClick)
-    if mouseClick == MouseClick.LEFT then
-        self.isDragging = false
-        self:StopMovingOrSizing()
-    end
     zebug.trace:print("onMouseUp", mouseClick)
 end
 
-function foo()
-    self.mouseX, self.mouseY = GetCursorPosition()
+function TheButton:onDragStart()
+    if InCombatLockdown() then return end
+    self.isDragging = true
+    self:StartMoving()
+end
 
+function TheButton:onDragStop()
+    self.isDragging = false
+    self:StopMovingOrSizing()
+    self:savePosition()
+end
+
+function TheButton:restorePositionFromDb()
+    local p = DB.theButtonPos
+    self:moveTo(p.point, p.relativeToFrameName, p.relativePoint, p.xOffset, p.yOffset)
+end
+
+function TheButton:resetPositionToDefault()
+    self:moveTo("CENTER", nil, "CENTER", 0, 0)
+    self:Show()
+    DB.opts.isButtonShown = true
+end
+
+function TheButton:moveTo(point, relativeToFrameName, relativePoint, xOffset, yOffset)
+    if InCombatLockdown() then C_Timer.After(1, function() self:moveTo(point, relativeToFrameName, relativePoint, xOffset, yOffset)  end) return end
+    self:SetClampedToScreen(true)
+    self:ClearAllPoints()
+    local relativeToFrame = _G[relativeToFrameName] or UIParent
+    self:SetPoint(point or "CENTER", relativeToFrame, relativePoint or "CENTER", xOffset or 0, yOffset or 0)
+    self:savePosition()
+end
+
+function TheButton:savePosition() -- save button position after move
+    local point, relativeTo, relativePoint, xOffset, yOffset = self:GetPoint()
+    DB.theButtonPos.point = point or "CENTER"
+    DB.theButtonPos.relativeToFrameName = relativeTo and relativeTo.GetName and relativeTo:GetName() or "UIParent"
+    DB.theButtonPos.relativePoint = relativePoint or "CENTER"
+    DB.theButtonPos.xOffset = xOffset
+    DB.theButtonPos.yOffset = yOffset
 end
 
 ---@return boolean true if consumed: stop propagation!

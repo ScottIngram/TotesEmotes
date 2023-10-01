@@ -44,21 +44,6 @@ function EventHandlers:PLAYER_ENTERING_WORLD(isInitialLogin, isReloadingUi)
 end
 
 -------------------------------------------------------------------------------
--- Handlers Loaded Addons
--------------------------------------------------------------------------------
-
-local AddonLoadedHandlers = {}
-
-function AddonLoadedHandlers:TotesEmotes()
-    -- Because: The position of named, movable, user-positioned frames created
-    -- before PLAYER_LOGIN is automatically restored by the client from the layout cache when the player logs in.
-    zebug.trace:print("Heard event: ADDON_LOADED --> TotesEmotes")
-    DB:initializeProfiles()
-    DB:initializeOptsMemory() -- do this here because it's used by TheButton:new()
-    theButton = TheButton:new()
-end
-
--------------------------------------------------------------------------------
 -- Bliz's AddonCompartment Global Functions
 -------------------------------------------------------------------------------
 
@@ -69,7 +54,7 @@ function GLOBAL_TOTES_AddonCompartment_OnClick(addonName, mouseClick)
     if mouseClick == MouseClick.LEFT then
         TheButton:toggle()
     elseif mouseClick == MouseClick.MIDDLE then
-        TheButton:resetPosition()
+        TheButton:resetPositionToDefault()
     else
         Settings.OpenToCategory(Totes.myTitle)
     end
@@ -136,8 +121,13 @@ function initalizeAddonStuff()
     _G["BINDING_NAME_CLICK TotesEmotes:TheButton"] = "Toggle "..ADDON_NAME
 
     registerSlashCmd("totes", slashFuncs)
+
+    DB:initializeProfiles()
+    DB:initializeOptsMemory()
+    DB:initializeButtonMemory()
     Config:initializeOptionsMenu()
 
+    theButton = TheButton:new()
     theMenu = TheMenu:new()
 
     emotesTree = EmoteDefinitions:makeNavigationTree()
