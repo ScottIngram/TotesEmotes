@@ -157,7 +157,7 @@ end
 function TheButton:setNavSubscriptions(navigator)
     self.nav = navigator
     navigator:subscribe(NavEvent.OpenNode, TheButton_handleOpenNode, self.className)
-    nav:subscribe(NavEvent.OnEmote, TheButton_handleEmote, self.className)
+    navigator:subscribe(NavEvent.OnEmote, TheButton_handleEmote, self.className)
 end
 
 function TheButton_handleOpenNode(msg, node)

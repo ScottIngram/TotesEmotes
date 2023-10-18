@@ -130,8 +130,8 @@ function initalizeAddonStuff()
     theButton = TheButton:new()
     theMenu = TheMenu:new()
 
-    emotesTree = EmoteDefinitions:makeNavigationTree()
-    nav = Navigator:new(emotesTree)
+    local emotesTree = EmoteDefinitions:makeNavigationTree()
+    local nav = Navigator:new(emotesTree)
     theMenu:setNavSubscriptions(nav)
     theButton:setNavSubscriptions(nav)
 
@@ -146,4 +146,4 @@ end
 -- OK, Go for it!
 -------------------------------------------------------------------------------
 
-BlizGlobalEventsListener:register(Totes, EventHandlers, AddonLoadedHandlers)
+BlizGlobalEventsListener:register(Totes, EventHandlers)
