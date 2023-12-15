@@ -128,6 +128,10 @@ function TheMenu:toggle()
     end
 end
 
+function GLOBAL_TOTES_Toggle_Menu()
+    TheMenu:toggle()
+end
+
 function TheMenu:setIcon(icon)
     self.icon.portrait:SetTexture(icon)
 end

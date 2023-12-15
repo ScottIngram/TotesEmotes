@@ -118,7 +118,7 @@ function initalizeAddonStuff()
 
     -- support keybindings via arcane BS syntax and globals.  facepalm.
     _G.BINDING_HEADER_TotesEmotes = ADDON_NAME -- and this appears to not even be supported anymore
-    _G["BINDING_NAME_CLICK TotesEmotes:TheButton"] = "Toggle "..ADDON_NAME
+    _G["BINDING_NAME_"..KEYBINDING_ID] = ADDON_NAME .. " - Toggle Menu"
 
     registerSlashCmd("totes", slashFuncs)
 

@@ -25,6 +25,8 @@ FrameStrata = {
     TOOLTIP         = "TOOLTIP",
 }
 
+KEYBINDING_ID = "TotesEmotes_Toggle_Menu"
+
 QUOTE = "\""
 EOL = "\n"
 MAX_GLOBAL_MACRO_ID = 120

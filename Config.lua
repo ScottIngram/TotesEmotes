@@ -22,6 +22,21 @@ function Config:new()
     return Object:new(Config)
 end
 
+local function optKeyBind(config, value)
+    if value ~= nil then
+        local valueB = GetBindingKey(KEYBINDING_ID);
+        if valueB then
+            SetBinding(valueB);
+        end
+        if value ~= "" then
+            SetBinding(value, KEYBINDING_ID);
+        end
+        SaveBindings(GetCurrentBindingSet());
+    end
+    return GetBindingKey(KEYBINDING_ID);
+end
+
+
 ---@type table
 local optionsMenu
 
@@ -122,8 +137,24 @@ local function initializeOptionsMenu()
             },
 
             -------------------------------------------------------------------------------
-            -- Place Holder options
+            -- Key Bindings
             -------------------------------------------------------------------------------
+
+            keybindingHeader = {
+                order = 3000,
+                name = "Key Bindings",
+                type = 'header',
+            },
+            keybindingBinder = {
+                order = 3010,
+                type = "keybinding",
+                width = "double",
+                name = "Toggle Menu",
+                desc = "Open and close the menu of emotes.",
+                get = optKeyBind,
+                set = optKeyBind,
+            },
+
         }
     }
 

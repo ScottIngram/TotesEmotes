@@ -33,6 +33,7 @@ end
 ---@param self KeyListenerMixin
 function KeyListenerMixin:startKeyListener(onlyWhenMouseOver)
     self:EnableKeyboard(true)
+    -- TODO: fix taint failure triggered by SetPropagateKeyboardInput()
     self:SetScript("OnKeyDown",(function(self, key)
         local doConsumeKeyPress = (not onlyWhenMouseOver) or self:IsMouseOver()
         if doConsumeKeyPress then

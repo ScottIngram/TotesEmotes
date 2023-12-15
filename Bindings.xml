@@ -1,3 +1,6 @@
 <Bindings>
-	<Binding name="CLICK TotesEmotesTheButton:LeftButton" header="TotesEmotes" category="AddOns" default="CTRL-/"/>
+	<Binding name="TotesEmotes_Toggle_Menu" header="TotesEmotes" category="ADDONS" default="SHIFT-/">
+		GLOBAL_TOTES_Toggle_Menu()
+	</Binding>
+
 </Bindings>
