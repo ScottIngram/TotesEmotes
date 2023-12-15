@@ -168,7 +168,6 @@ function Navigator:convertSearchResultsIntoNode(matches, originalNode)
     return result
 end
 
-
 ---@return boolean true if consumed: stop propagation!
 function Navigator:handleKeyPress(key)
     -- assume Bliz consistently provides key in all upper case... ROFLMAO!!!
@@ -222,8 +221,10 @@ function Navigator:handleKeyPress(key)
 
     local word
     if string.match(key, '^[a-zA-Z]$') then
+        play(SND.KEYPRESS)
         word = self:pushLetter(key)
     elseif key == "DELETE" or key == "BACKSPACE" then
+        play(SND.DELETE)
         word = self:popLetter()
     elseif key == "ENTER" then
         -- treat enter the same as pressing the "1" key
@@ -234,6 +235,7 @@ function Navigator:handleKeyPress(key)
                 self:exit()
             end
         end
+        play(SND.ENTER)
         return result
     else
         -- exit when any unrecognized key is pressed
@@ -321,9 +323,11 @@ end
 ---@param navNode NavNode
 function Navigator:pickNode(navNode)
     if navNode.kids then
+        play(SND.NAV_INTO)
         self:push(navNode)
         self:goCurrentNode("pick node id "..navNode.id)
     else
+        play(SND.KEYPRESS)
         self:notifySubs(NavEvent.Execute, "childless node "..navNode.id, navNode)
     end
 end
@@ -398,10 +402,12 @@ function Navigator:goUp()
     -- don't go higher than the root.  signal "Exit" instead
     local currentNode = self:getCurrentNode()
     if currentNode.level == 0 then
+        play(SND.CLOSE)
         self:notifySubs(NavEvent.Exit, "goUp already at top")
         return
     end
 
+    play(SND.DELETE)
     self:pop()
     self:goCurrentNode("Go Up!")
 end

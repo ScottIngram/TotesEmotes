@@ -120,11 +120,11 @@ end
 
 function TheMenu:toggle()
     if self:IsShown() then
+        play(SND.CLOSE)
         self:Hide()
-        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON) --IG_MAINMENU_CLOSE
     else
+        play(SND.OPEN)
         self:Show()
-        PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF) --IG_MAINMENU_OPTION
     end
 end
 

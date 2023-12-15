@@ -93,6 +93,58 @@ function foo()
 end
 
 -------------------------------------------------------------------------------
+-- Sound Functions
+-------------------------------------------------------------------------------
+
+---@class SND
+SND = {
+    DELETE   = SOUNDKIT.IG_CHAT_SCROLL_UP,
+    KEYPRESS = SOUNDKIT.IG_MINIMAP_ZOOM_IN, -- IG_CHAT_SCROLL_DOWN
+    ENTER    = SOUNDKIT.IG_CHAT_BOTTOM,
+    NAV_INTO = SOUNDKIT.IG_ABILITY_PAGE_TURN, -- IG_QUEST_LOG_OPEN, --  IG_MAINMENU_OPTION
+    NAV_OUTOF= SOUNDKIT.IG_ABILITY_PAGE_TURN, -- IG_QUEST_LOG_OPEN, --  IG_MAINMENU_OPTION
+    OPEN     = SOUNDKIT.IG_SPELLBOOK_OPEN, -- IG_BACKPACK_OPEN, -- IG_MAINMENU_OPTION_CHECKBOX_OFF
+    CLOSE    = SOUNDKIT.IG_SPELLBOOK_CLOSE, -- IG_CHARACTER_INFO_CLOSE, -- IG_MAINMENU_OPTION_CHECKBOX_ON
+    SCROLL_UP = SOUNDKIT.IG_CHAT_SCROLL_UP,
+    SCROLL_DOWN = SOUNDKIT.IG_CHAT_SCROLL_DOWN,
+}
+play = PlaySound
+
+function makeSoundDemoButton()
+    local funcs = {}
+    for k, v in pairs(SOUNDKIT) do
+        if string.sub(k,1,3) == "IG_" then
+            funcs[#funcs+1] = function(btn, mouseClick)
+                print(k)
+                local foo = string.len(k) or 1
+                btn:SetSize(foo * 10, 30)
+                btn:SetText(k)
+                PlaySound(v)
+            end
+        end
+    end
+
+    local btn = CreateFrame("Button", nil, UIParent, "UIPanelButtonTemplate")
+    btn:SetPoint("CENTER")
+    btn:SetText("Sound Demo")
+    btn:SetSize(200, 30)
+    btn:SetFrameStrata(FrameStrata.TOOLTIP)
+    btn:RegisterForClicks("AnyUp")
+
+    btn:SetScript("OnClick", function(btn, mouseClick)
+        local mathOp = (mouseClick == MouseClick.LEFT) and 1 or (mouseClick == MouseClick.RIGHT) and 1 or 0
+        btn.i = (btn.i or 0) + mathOp
+        if btn.i > #funcs then
+            btn.i = 1
+        elseif btn.i < 1 then
+            btn.i = #funcs
+        end
+        local func = funcs[btn.i]
+        func(btn, mouseClick)
+    end)
+end
+
+-------------------------------------------------------------------------------
 -- Config for Slash Commands aka "/ufo"
 -------------------------------------------------------------------------------
 
