@@ -187,6 +187,16 @@ function TheMenu:clearRowList()
     end
 end
 
+function TheMenu:scrollDown()
+    self.listing.scrollBar:ScrollStepInDirection(1)
+    play(SND.SCROLL_DOWN)
+end
+
+function TheMenu:scrollUp()
+    self.listing.scrollBar:ScrollStepInDirection(-1)
+    play(SND.SCROLL_UP)
+end
+
 -------------------------------------------------------------------------------
 -- KeyListener Event handlers
 -------------------------------------------------------------------------------
@@ -241,6 +251,8 @@ function TheMenu:setNavSubscriptions(nav)
     nav:subscribe(NavEvent.OpenNode, function(msg, navNode) self:handleNavOpenNode(msg, navNode) end, self.className)
     ---@param navNode NavNode
     nav:subscribe(NavEvent.Execute, function(msg, navNode) self:handleNavExecuteNode(msg, navNode) end, self.className)
+    nav:subscribe(NavEvent.DownKey, function() self:scrollDown() end, self.className)
+    nav:subscribe(NavEvent.UpKey, function() self:scrollUp() end, self.className)
 end
 
 function TheMenu:handleNavExit()

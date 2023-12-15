@@ -16,6 +16,8 @@ NavEvent = {
     OnEmote = { name="OnEmote", arg1="instigator name", arg2="EmoteDefinition" },
     Exit    = { name="Exit",    arg1="string", arg2="?" },
     Reset   = { name="Reset",   arg1="string", arg2="?" },
+    UpKey   = { name="Up Key", arg1="string", arg2="?" },
+    DownKey = { name="Down Key", arg1="string", arg2="?" },
     SearchStringChange = { name="SearchStringChange", arg1="instigator name", arg2="the new search string" },
 }
 
@@ -173,9 +175,26 @@ function Navigator:handleKeyPress(key)
     -- Is Bliz EVER consistent about ANYTHING?!?!   OMG, good one!!!  Tears!  Tears streaming from my eyes!
     key = string.upper(key)
 
-    -- the escape key exits the current level and goes up one... and the LEFT and UP keys too, why not?
-    if key == "ESCAPE" or key == "LEFT" or key == "UP" or (key == "BACKSPACE" and not self.searchString) then
+    -- the escape key closes the window
+    --if key == "ESCAPE" then
+    --    self:exit()
+    --    return KeyListenerResult.consumed
+    --end
+
+    -- the LEFT and UP keys exit the current level and goes up one
+    if
+    key == "ESCAPE" or
+    key == "LEFT" or
+    ((key == "DELETE" or key == "BACKSPACE") and not self.searchString) then
         self:goUp()
+        return KeyListenerResult.consumed
+    end
+
+    if key == "DOWN" then
+        self:notifySubs(NavEvent.DownKey, "Down Key")
+        return KeyListenerResult.consumed
+    elseif key == "UP" then
+        self:notifySubs(NavEvent.UpKey, "Up Key")
         return KeyListenerResult.consumed
     end
 
