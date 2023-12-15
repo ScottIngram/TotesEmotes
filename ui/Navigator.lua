@@ -226,7 +226,18 @@ function Navigator:handleKeyPress(key)
     elseif key == "DELETE" or key == "BACKSPACE" then
         word = self:popLetter()
     elseif key == "ENTER" then
-        return self:inputNumber(1) -- treat enter the same as pressing the "1" key
+        -- treat enter the same as pressing the "1" key
+        local result = self:inputNumber(1)
+        if result == KeyListenerResult.consumed then
+            -- pressing shift-enter will exit the window
+            if IsModifierKeyDown() then
+                self:exit()
+            end
+        end
+        return result
+    else
+        -- exit when any unrecognized key is pressed
+        return KeyListenerResult.passedOn
     end
 
     zebug.trace:print("word", word)
@@ -372,6 +383,12 @@ function Navigator:createSearchIndex(navNode)
     return searchIndex
 end
 
+function Navigator:exit()
+    self:nukeSearchString()
+    self:replaceMenu(self.rootNode)
+    self:goCurrentNode("Exit")
+    self:notifySubs(NavEvent.Exit, "explicit exit")
+end
 
 function Navigator:goUp()
     self:nukeSearchString()
