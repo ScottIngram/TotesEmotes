@@ -125,6 +125,7 @@ function TheMenu:toggle()
     else
         play(SND.OPEN)
         self:Show()
+        self:SetClampedToScreen( true )
     end
 end
 
