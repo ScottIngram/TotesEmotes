@@ -93,8 +93,9 @@ function TheButton:onMouseDown(mouseClick)
 
     if mouseClick == MouseClick.LEFT then
         theMenu:toggle()
+    elseif mouseClick == MouseClick.RIGHT then
+        Settings.OpenToCategory(Totes.myTitle)
     end
-    zebug.trace:print("onMouseDown", mouseClick)
 end
 
 ---@param mouseClick MouseClick
