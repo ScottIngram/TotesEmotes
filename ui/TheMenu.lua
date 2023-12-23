@@ -79,6 +79,7 @@ function TheMenu:new()
 
     -- Appearance
     self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
+    self:SetClampedToScreen(true)
     self:setIcon(ICON_TOP_MENU)
     self.titleBar.TitleText:SetText(ADDON_NAME)
 
@@ -125,7 +126,6 @@ function TheMenu:toggle()
     else
         play(SND.OPEN)
         self:Show()
-        self:SetClampedToScreen( true )
     end
 end
 
