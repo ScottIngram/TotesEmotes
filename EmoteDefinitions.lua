@@ -8,6 +8,8 @@
 ---@type TotesEmotes
 local ADDON_NAME, Totes = ...
 Totes.Wormhole() -- Lua voodoo magic that replaces the current Global namespace with the Totes object
+
+---@type L10N
 L10N = Totes.L10N
 
 ---@class EmoteDefinitions

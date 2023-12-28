@@ -86,6 +86,18 @@ function GLOBAL_TOTES_AddonCompartment_OnLeave(addonName, menuButtonFrame)
 end
 
 -------------------------------------------------------------------------------
+-- L10N Utility Functions
+-------------------------------------------------------------------------------
+
+function L10N.getTipsForConfigScreen()
+    return strjoin("\n    * ", "", L10N.RIGHT_CLICK_BUTTON_TO_OPEN_CONFIG, unpack(L10N.TIP_LIST))
+end
+
+function L10N.getTipsForToolTip()
+    return strjoin("\n* ", "* ".. L10N.RIGHT_CLICK_TO_OPEN_CONFIG, unpack(L10N.TIP_LIST))
+end
+
+-------------------------------------------------------------------------------
 -- Utility Functions
 -------------------------------------------------------------------------------
 

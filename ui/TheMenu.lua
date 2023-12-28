@@ -105,7 +105,31 @@ function TheMenu:new()
     ScrollUtil.InitScrollBoxListWithScrollBar(self.listing.scrollBox, self.listing.scrollBar, view)
     --self.listing.scrollBox:SetShown(self.listing.scrollBox:HasScrollableExtent())
 
+    -- tooltip
+    self.icon.portrait:SetScript("OnEnter", iconOnEnter)
+    self.icon.portrait:SetScript("OnLeave", function() GameTooltip:Hide() end)
+    self.icon.portrait:SetScript("OnMouseUp", iconOnClick)
+
     return self
+end
+
+function iconOnEnter(self)
+    GameTooltip:SetOwner(self, "ANCHOR_LEFT", 25, -25)
+    GameTooltip:SetText(L10N.getTipsForToolTip())
+    GameTooltip:Show()
+end
+
+function iconOnExit(self)
+    GameTooltip:Hide()
+end
+
+---@param mouseClick MouseClick
+function iconOnClick(self, mouseClick, isDown)
+    if mouseClick == MouseClick.LEFT then
+        --theMenu:toggle()
+    elseif mouseClick == MouseClick.RIGHT then
+        Settings.OpenToCategory(Totes.myTitle)
+    end
 end
 
 function TheMenu:setListing(navNodesList)

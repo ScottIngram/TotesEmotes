@@ -61,7 +61,10 @@ local function initializeOptionsMenu()
                 order = 100,
                 type = 'description',
                 fontSize = "small",
-                name = "All emotes are a few clicks away.",
+                name = [=[All /emotes are a few clicks away!
+
+Tips:
+]=].. L10N.getTipsForConfigScreen(),
             },
 
             -------------------------------------------------------------------------------

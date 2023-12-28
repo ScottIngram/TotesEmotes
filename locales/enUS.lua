@@ -32,3 +32,13 @@ Neutral = "Neutral"
 Combat  = "Combat"
 
 CLICK_TO_TOGGLE_FAVORITE = "Click to toggle favorite."
+
+RIGHT_CLICK_TO_OPEN_CONFIG = "Right-click this icon to open the config screen."
+RIGHT_CLICK_BUTTON_TO_OPEN_CONFIG = "Right-click the Emotes button or the Header Icon to open this config screen."
+
+TIP_LIST = {
+    "Escape or left arrow will go up a menu level.",
+    "Up and down arrow scroll the list.",
+    "Enter activates the first emote.",
+    "Shift-Enter ditto AND also closes the menu.",
+}
