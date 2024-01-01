@@ -103,7 +103,9 @@ function TheMenu:new()
         -- END callback
     end)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.listing.scrollBox, self.listing.scrollBar, view)
-    --self.listing.scrollBox:SetShown(self.listing.scrollBox:HasScrollableExtent())
+    self.listing.scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnAcquiredFrame, self.recycleRowBtn, self); -- callback(self, rowBtn, rowData)
+    self.listView = view
+    --self.listing.scrollBar:SetShown(self.listing.scrollBox:HasScrollableExtent())
 
     -- tooltip
     self.icon.portrait:SetScript("OnEnter", iconOnEnter)
@@ -181,18 +183,6 @@ function TheMenu:activateDrag()
         end
     end
     zebug.trace:print("onMouseDown", mouseClick)
-end
-
----@param rowBtn MenuRowController
----@param navNode NavNode
-function TheMenu:initializeRowBtn(rowBtn, navNode)
-    zebug.trace:print(rowBtn:GetOrderIndex())
-    if not rowBtn.getMenu then
-        rowBtn.getMenu = function() return self end
-        rowBtn.nav = self.nav
-        rowBtn:SetParentKey("btn"..rowBtn:GetOrderIndex())
-    end
-    rowBtn:formatRow(navNode)
 end
 
 ---@param row MenuRowController
@@ -347,6 +337,39 @@ function TheMenu:getRowForNavNode(navNode)
 end
 
 -------------------------------------------------------------------------------
+-- For the MenuRowController
+-------------------------------------------------------------------------------
+
+---@param rowBtn MenuRowController
+---@param navNode NavNode
+function TheMenu:initializeRowBtn(rowBtn, navNode)
+    zebug.trace:print(rowBtn:GetOrderIndex())
+    if not rowBtn.isInit then
+        rowBtn.isInit = true
+        rowBtn.getMenu = function() return self end
+        rowBtn.nav = self.nav
+        rowBtn.scrollBox = self.listing.scrollBox
+        rowBtn:SetParentKey("btn"..rowBtn:GetOrderIndex())
+    end
+    rowBtn:formatRow(navNode)
+end
+
+---@param rowBtn MenuRowController
+---@param navNode NavNode
+function TheMenu:recycleRowBtn(rowBtn, rowData, c)
+    if not rowBtn.isInit then
+        return
+    end
+
+    self.listing.scrollBox:ForEachFrame(function(row)
+        if rowBtn.isInit then
+            updateHotKey(row)
+        end
+    end)
+end
+
+
+-------------------------------------------------------------------------------
 -- MenuRowController
 -------------------------------------------------------------------------------
 
@@ -373,19 +396,26 @@ function MenuRowController:formatRow(navNode)
         zebug.trace:print("emote",emote.name, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
     end
 
-    local n = self:GetOrderIndex()
+    updateHotKey(self)
+end
+
+function updateHotKey(row)
+    local n = row:GetOrderIndex()
+    local indexOfFirstVisibleRow = TheMenu.listView:GetDataIndexBegin()
 
     -- put a number next to the first 10 rows (or more depending on user config opts)
     local howManyQuickKeys = 10
             + ((DB.opts.quickKeyBacktick and 1) or 0)
             + ((DB.opts.quickKeyDash and 1) or 0)
             + ((DB.opts.quickKeyEqual and 1) or 0)
-    if n <= howManyQuickKeys then
-        self:getMenu().rowList[n] = self
 
+    local indexEnder = indexOfFirstVisibleRow + howManyQuickKeys
+
+    if n < indexEnder then
         local bump = (DB.opts.quickKeyBacktick and 1) or 0
         ---@type string
-        local display = n - bump
+        local display = n - bump - indexOfFirstVisibleRow + 1
+        TheMenu.rowList[display] = row
 
         if display == 10 then
             display = "0"
@@ -397,11 +427,11 @@ function MenuRowController:formatRow(navNode)
             display = "="
         end
 
-        zebug.trace:print("adding self to rowList",self.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display",display, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
+        zebug.trace:print("adding self to rowList", row.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display",display, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
 
-        self.audioBtn.text:SetText(display)
+        row.audioBtn.text:SetText(display)
     else
-        self.audioBtn.text:SetText(nil)
+        row.audioBtn.text:SetText(nil)
     end
 end
 
