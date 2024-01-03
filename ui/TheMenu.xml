@@ -61,6 +61,22 @@
                     </EventFrame>
                 </Frames>
             </Frame>
+            <!-- EditBox code stolen from Blizzard_ToyBox.xml -->
+            <EditBox name="$parentSearchBox"
+                     parentKey = "searchBox"
+                     inherits = "SearchBoxTemplate"
+                     letters = "20"
+                     alphabeticOnly = "true"
+                     mixin = "TotesTheMenuController"
+            >
+                <Size x="175" y="20"/>
+                <Anchors>
+                    <Anchor point="BOTTOMLEFT" x="8" y="4"/>
+                </Anchors>
+                <Scripts>
+                    <OnTextChanged function="GLOBAL_TOTES_TheMenu_onSearchTextChanged"/>
+                </Scripts>
+            </EditBox>
             <Button name = "TotesTheMenuResizerBtn"
                     parentKey = "resizer"
                     mixin     = "TotesTheMenuResizerBtnController"

@@ -86,6 +86,7 @@ function TheMenu:new()
 
     -- Behavior
     self:startKeyListener(KeyListenerScope.alwaysWhileVisible)
+    --self.searchBox:Disable() -- prevents user input effectively making it a display-only UI
 
     -- scroll area
     local pad = 0
@@ -273,6 +274,45 @@ function TheMenu:saveSizeToDb()
 end
 
 -------------------------------------------------------------------------------
+-- Search box
+-------------------------------------------------------------------------------
+
+local previousSearchString
+
+function GLOBAL_TOTES_TheMenu_onSearchTextChanged(searchBox)
+    SearchBoxTemplate_OnTextChanged(searchBox)
+
+    local newText = searchBox:GetText()
+    local strippedText = newText
+    strippedText = string.gsub(strippedText, "^%s+", "")
+    strippedText = string.gsub(strippedText, "%s+$", "")
+    local hasNoBlankSpaceOnEnds = newText == strippedText
+    zebug.error:print("name", searchBox:GetName(), "search text", "["..newText.."]", "previousSearchString", "["..(previousSearchString or "").."]")
+    if previousSearchString ~= strippedText then
+        zebug.error:print("running search")
+        TheMenu.nav:runSearchFor(strippedText)
+        previousSearchString = strippedText
+    end
+
+    thisIsMe = false
+end
+
+function TheMenu:updateSearchString(msg)
+    local searchBox = self.searchBox
+    local newText = msg or ""
+    local oldText = searchBox:GetText() or ""
+    if oldText == newText then
+        zebug.warn:print("no change = aborting!")
+        return
+    end
+
+    searchBox:SetText(newText)
+    SearchBoxTemplate_OnTextChanged(searchBox)
+
+    zebug.error:print("name TM",self:GetName(), "msg", newText, "search text",searchBox:GetText())
+end
+
+-------------------------------------------------------------------------------
 -- Resizer Button
 -------------------------------------------------------------------------------
 
@@ -301,6 +341,7 @@ function TheMenu:setNavSubscriptions(nav)
     nav:subscribe(NavEvent.Execute, function(msg, navNode) self:handleNavExecuteNode(msg, navNode) end, self.className)
     nav:subscribe(NavEvent.DownKey, function() self:scrollDown() end, self.className)
     nav:subscribe(NavEvent.UpKey, function() self:scrollUp() end, self.className)
+    nav:subscribe(NavEvent.SearchStringChange, function(msg) self:updateSearchString(msg) end, self.className)
 end
 
 function TheMenu:handleNavExit()
@@ -315,7 +356,7 @@ function TheMenu:handleNavOpenNode(msg, navNode)
     local isEmote = emoteDef and emoteDef.isEmote
     zebug.info:name("handleOpenNode"):print("msg",msg, "node level", navNode.level, "id", id, "#kids", navNode.kids and #navNode.kids, "isEmote",isEmote)
     local icon = emoteDef and emoteDef.icon or ICON_TOP_MENU
-    local label = navNode.name or EmoteCatName[id]
+    local label = --[[navNode.name or]] EmoteCatName[id] -- no longer display the search string in place of the cat name
     self.header.fontString:SetText(label)
     self:setIcon(icon)
     self:selectedRow(nil)

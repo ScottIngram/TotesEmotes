@@ -243,11 +243,14 @@ function Navigator:handleKeyPress(key)
     end
 
     zebug.trace:print("word", word)
+    return self:runSearchFor(word)
+end
+
+function Navigator:runSearchFor(word)
+    self.searchString = word
+
     if exists(word) then
         local matches = self:search(word)
-        if not matches then
-            -- self:popLetter() -- remove the last letter
-        end
         self:goSearchResults(matches)
         return KeyListenerResult.consumed
     else
@@ -256,21 +259,26 @@ function Navigator:handleKeyPress(key)
             self:pop()
             self:goCurrentNode("search text cleared")
         end
+        return KeyListenerResult.passedOn
     end
 
-    return KeyListenerResult.passedOn
 end
+
 
 ---@param c string a single letter
 ---@return string the word formed by all input letters
 function Navigator:pushLetter(c)
+    if string.len(self.searchString or "") == MAX_SEARCH_STRING_SIZE then
+        return self.searchString
+    end
+
     c = string.lower(c)
     if self.searchString then
         self.searchString = self.searchString .. c
     else
         self.searchString = c
     end
-    self:broadcastSearchStringChange("added "..c)
+    self:broadcastSearchStringChange(self.searchString)
     return self.searchString
 end
 
@@ -282,17 +290,17 @@ function Navigator:popLetter()
             self.searchString = nil
         end
     end
-    self:broadcastSearchStringChange("popped")
+    self:broadcastSearchStringChange(self.searchString)
     return self.searchString
 end
 
 function Navigator:nukeSearchString()
     self.searchString = nil
-    self:broadcastSearchStringChange("nuked")
+    self:broadcastSearchStringChange(self.searchString)
 end
 
 function Navigator:broadcastSearchStringChange(msg)
-    self:notifySubs(NavEvent.SearchStringChange, msg or "googly do!", self.searchString)
+    self:notifySubs(NavEvent.SearchStringChange, msg, self.searchString)
 end
 
 ---@return number
