@@ -17,7 +17,9 @@
 
 ---@class DB
 ---@field opts table
----@field theButtonPos position coordinates for the button
+---@field theButtonPos table position coordinates for the button
+---@field theMenuPos table position coordinates for the menu
+---@field theMenuSize table size and shape of the menu
 local DB = {}
 
 ---@type TotesEmotes
@@ -31,18 +33,6 @@ Totes.DB = DB
 ---@field quickKeyEqual boolean the menu will include = on the end
 ---@field faves table<string,boolean> which emotes are favorites { emoteName = t/f }
 Options = { }
-
--------------------------------------------------------------------------------
--- Profiles
--------------------------------------------------------------------------------
-
-function DB:initializeProfiles()
-    if not TOTES_PROFILES then
-        TOTES_PROFILES = { }
-    end
-
-    DB.profiles = TOTES_PROFILES
-end
 
 -------------------------------------------------------------------------------
 -- Config Opts
@@ -73,15 +63,21 @@ function DB:getOptionDefaults()
 end
 
 -------------------------------------------------------------------------------
--- Button Position
+-- Button & Menu Positions & Size
 -------------------------------------------------------------------------------
 
-function DB:initializeButtonMemory()
-    if not TOTES_BTN_COORDS then
-        TOTES_BTN_COORDS = { }
+function DB:initializePositionMemory()
+    if not TOTES_COORDS then
+        TOTES_COORDS = {
+            theButtonPos = {},
+            theMenuPos = {},
+            theMenuSize = {},
+        }
     end
 
-    DB.theButtonPos = TOTES_BTN_COORDS
+    DB.theButtonPos = TOTES_COORDS.theButtonPos
+    DB.theMenuPos = TOTES_COORDS.theMenuPos
+    DB.theMenuSize = TOTES_COORDS.theMenuSize
 end
 
 

@@ -5,11 +5,18 @@
            virtual     = "true"
            inherits    = "ButtonFrameBaseTemplate"
            mixin       = "TotesTheMenuController"
-           useParentLevel="true"
-           frameLevel  = "10"
+           frameLevel  = "600"
+           toplevel     = "true"
+           movable     = "true"
+           resizable   = "true"
+           clampedToScreen = "true"
            hidden      = "true"
     >
         <Size x="200" y="600"/>
+        <ResizeBounds>
+            <minResize x="200" y="200"/>
+            <maxResize x="500" y="1000"/>
+        </ResizeBounds>
         <Anchors>
             <Anchor point="BOTTOMRIGHT" relativeKey="$parent" relativePoint="TOPLEFT" x="40" y="-60" />
         </Anchors>
@@ -54,9 +61,27 @@
                     </EventFrame>
                 </Frames>
             </Frame>
+            <Button name = "TotesTheMenuResizerBtn"
+                    parentKey = "resizer"
+                    mixin     = "TotesTheMenuResizerBtnController"
+                    scale     = "1.5"
+            >
+                <Size x="16" y="16"/>
+                <Anchors>
+                    <Anchor point="BOTTOMRIGHT" x="0" y="0"/>
+                </Anchors>
+                <NormalTexture file="Interface/ChatFrame/UI-ChatIM-SizeGrabber-Down"/>
+                <PushedTexture file="Interface/ChatFrame/UI-ChatIM-SizeGrabber-Up"/>
+                <HighlightTexture file="Interface/ChatFrame/UI-ChatIM-SizeGrabber-Highlight"/>
+                <Scripts>
+                    <OnMouseDown method="OnMouseDown"/>
+                    <OnMouseUp method="OnMouseUp"/>
+                </Scripts>
+            </Button>
         </Frames>
         <Scripts>
-            <OnLoad method="OnLoad"/>
+            <OnMouseDown method="onMouseDown"/>
+            <OnMouseUp method="onMouseUp"/>
         </Scripts>
     </Frame>
 

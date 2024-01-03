@@ -48,6 +48,7 @@ function TheButton:new()
     self:RegisterForClicks("AnyDown", "AnyUp")
     self:RegisterForDrag("LeftButton")
     self:SetMovable(true)
+    self:SetClampedToScreen(true)
 
     self:restorePositionFromDb()
     self:restoreVisibility()
@@ -128,7 +129,6 @@ end
 
 function TheButton:moveTo(point, relativeToFrameName, relativePoint, xOffset, yOffset)
     if InCombatLockdown() then C_Timer.After(1, function() self:moveTo(point, relativeToFrameName, relativePoint, xOffset, yOffset)  end) return end
-    self:SetClampedToScreen(true)
     self:ClearAllPoints()
     local relativeToFrame = _G[relativeToFrameName] or UIParent
     self:SetPoint(point or "CENTER", relativeToFrame, relativePoint or "CENTER", xOffset or 0, yOffset or 0)

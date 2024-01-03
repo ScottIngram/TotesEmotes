@@ -186,9 +186,8 @@ function initalizeAddonStuff()
 
     registerSlashCmd("totes", slashFuncs)
 
-    DB:initializeProfiles()
     DB:initializeOptsMemory()
-    DB:initializeButtonMemory()
+    DB:initializePositionMemory()
     Config:initializeOptionsMenu()
 
     theButton = TheButton:new()

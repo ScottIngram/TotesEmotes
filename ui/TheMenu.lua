@@ -28,6 +28,11 @@ TheMenu = { className = "TheMenu", rowList={}, }
 KeyListenerMixin:inject(TheMenu)
 _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
 
+---@class TheMenuResizerBtnController
+---@field className string "TheMenuResizerBtnController"
+TheMenuResizerBtnController = { className = "TheMenuResizerBtnController" }
+_G["TotesTheMenuResizerBtnController"] = TheMenuResizerBtnController -- export for use by the XML
+
 ---@class MenuRowController
 ---@field className string
 ---@field emote EmoteDefinition
@@ -61,14 +66,8 @@ ICON_VIZ   = 538536
 -------------------------------------------------------------------------------
 
 function TheMenu:new()
-    -- BasicFrameTemplate - padded lt grey - thick borders
-    -- BasicFrameTemplateWithInset - padded dk grey - thick borders
-    -- ButtonFrameTemplate - ditto but with an icon vignette
-    -- PortraitFrameTemplate - ditto but brown and no padding
-    -- InsetFrameTemplate3 -- lt grey bg - thin grey border
-    -- TranslucentFrameTemplate -- dk grey bg  - grey border bolted
     ---@type TheMenu
-    local self = CreateFrame("Frame", ADDON_NAME.."TheMenu", theButton, "TotesTheMenuTemplate")
+    local self = CreateFrame("Frame", ADDON_NAME.."TheMenu", UIParent, "TotesTheMenuTemplate")
     TheMenu = deepcopy(TheMenu, self)
 
     -- give more recognizable names to Bliz UI elements
@@ -78,19 +77,14 @@ function TheMenu:new()
     self.closeBtn = _G[self:GetName().."CloseButton"]
 
     -- Appearance
-    self:SetPoint("BOTTOM", theButton, "TOP", 0, 0)
-    self:SetClampedToScreen(true)
     self:setIcon(ICON_TOP_MENU)
     self.titleBar.TitleText:SetText(ADDON_NAME)
 
-    -- Behavior
-    self:SetScript("OnMouseDown", TheMenu.onMouseDown)
-    self:SetScript("OnMouseUp", TheMenu.onMouseUp)
-    self.canMove = false -- TODO - make a config option
-    if self.canMove then
-        self:SetMovable(true)
-    end
+    -- Position
+    self:restoreSizeFromDb()
+    self:restorePositionFromDb()
 
+    -- Behavior
     self:startKeyListener(KeyListenerScope.alwaysWhileVisible)
 
     -- scroll area
@@ -163,28 +157,6 @@ function TheMenu:setIcon(icon)
     self.icon.portrait:SetTexture(icon)
 end
 
-function TheMenu:repairStrata()
-    -- must do this here instead of new() because Bliz borks these values on PLAYER_LOGIN
-    -- NOT USED - moving everything into the XML seems to have solved the problem
-    local level = theButton:GetFrameLevel()
-    self:SetFrameStrata( theButton:GetFrameStrata() )
-    self:SetFrameLevel( level - 3 )
-    self.icon:SetFrameLevel( level - 2  )
-    self.border:SetFrameLevel( level - 1  ) -- the frame goes over the icon
-end
-
-function TheMenu:activateDrag()
-    -- pay attention to how far the button is dragged so we cam choose to handleClick or not -- currently unused
-    if mouseClick == MouseClick.LEFT then
-        self.mouseX, self.mouseY = GetCursorPosition()
-        self.isDragging = true
-        if self.canMove then
-            self:StartMoving()
-        end
-    end
-    zebug.trace:print("onMouseDown", mouseClick)
-end
-
 ---@param row MenuRowController
 function TheMenu:selectedRow(row)
     if self.currentlySelected then
@@ -222,36 +194,97 @@ function TheMenu:handleKeyPress(key)
 end
 
 -------------------------------------------------------------------------------
--- Widget Event handlers
+-- Widget Event handlers for dragging and resizing
 -------------------------------------------------------------------------------
+
+function isTitleBar()
+    return TheMenu.titleBar.TitleText:IsMouseOver(15, -10, -25, 15) -- extra room for Top, Bottom, Left, Right
+end
 
 ---@param mouseClick MouseClick
 function TheMenu:onMouseDown(mouseClick)
+    if not isTitleBar() then return end
     if mouseClick == MouseClick.LEFT then
         self.isDragging = true
-        if self.canMove then
-            self:StartMoving()
-        end
+        self:StartMoving()
     end
     zebug.trace:print("onMouseDown", mouseClick)
 end
 
 ---@param mouseClick MouseClick
 function TheMenu:onMouseUp(mouseClick)
+    -- as written, this fires regardless of isDragging == true -- TODO: anticipate this becoming a problem
     if mouseClick == MouseClick.LEFT then
         self.isDragging = false
         self:StopMovingOrSizing()
+        self:savePositionToDb()
     end
     zebug.trace:print("onMouseUp", mouseClick)
 end
 
+function TheMenu:restorePositionFromDb()
+    local p = DB.theMenuPos
+    if p and p.point and p.relativeToFrameName and p.relativePoint and p.xOffset and p.yOffset then
+        self:moveTo(p.point, p.relativeToFrameName, p.relativePoint, p.xOffset, p.yOffset)
+    else
+        self:resetPositionToDefault()
+    end
+end
+
+function TheMenu:resetPositionToDefault()
+    self:moveTo("CENTER", nil, "CENTER", 0, 0)
+    self:Show()
+end
+
+function TheMenu:moveTo(point, relativeToFrameName, relativePoint, xOffset, yOffset)
+    if InCombatLockdown() then C_Timer.After(1, function() self:moveTo(point, relativeToFrameName, relativePoint, xOffset, yOffset)  end) return end
+    self:ClearAllPoints()
+    local relativeToFrame = _G[relativeToFrameName] or UIParent
+    self:SetPoint(point, relativeToFrame, relativePoint, xOffset, yOffset)
+    self:savePositionToDb()
+end
+
+function TheMenu:savePositionToDb()
+    local point, relativeTo, relativePoint, xOffset, yOffset = self:GetPoint()
+    zebug.error:print("point", point, "relativeTo", relativePoint, "relativePoint", relativeTo, "xOffset", xOffset, "yOffset", yOffset)
+    DB.theMenuPos.point = point or "TOPLEFT"
+    DB.theMenuPos.relativeToFrameName = relativeTo and relativeTo.GetName and relativeTo:GetName() or "UIParent"
+    DB.theMenuPos.relativePoint = relativePoint or "TOPLEFT"
+    DB.theMenuPos.xOffset = xOffset
+    DB.theMenuPos.yOffset = yOffset
+end
+
+function TheMenu:restoreSizeFromDb()
+    local g = DB.theMenuSize
+    zebug.error:dumpy("theMenuSize",g)
+    if g and g.width and g.height then
+        self:SetSize(g.width, g.height)
+        --self:SetHeight(g.height)
+        zebug.warn:print("width", g.width, "height", g.height)
+    end
+end
+
+function TheMenu:saveSizeToDb()
+    local width, height = self:GetSize()
+    zebug.error:print("name",self:GetName(), "width", width, "height", height)
+
+    DB.theMenuSize.width = width
+    DB.theMenuSize.height = height
+end
+
 -------------------------------------------------------------------------------
--- XML Event handlers
+-- Resizer Button
 -------------------------------------------------------------------------------
 
-function TheMenu:OnLoad(arg1)
-    -- self is the XML's instance of TheMenu mixin
-    zebug.trace:name("OnLoad"):print("self",self, "arg1", arg1, "TheMenu",TheMenu, "theMenu",theMenu)
+function TheMenuResizerBtnController:OnMouseDown()
+    -- tell the UI that the lower right corner should follow the mouse pointer
+    self:GetParent():StartSizing("BOTTOMRIGHT")
+end
+
+function TheMenuResizerBtnController:OnMouseUp()
+    self:GetParent():StopMovingOrSizing("BOTTOMRIGHT")
+    self:GetParent():saveSizeToDb()
+    self:GetParent():savePositionToDb() -- because Bliz's GetPoint() API is spastic and arbitarily changes its coordinate system if the size changes among other things
 end
 
 -------------------------------------------------------------------------------
