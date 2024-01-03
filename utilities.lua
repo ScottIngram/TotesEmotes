@@ -263,7 +263,7 @@ end
 
 function isClass(firstArg, class)
     assert(class, ADDON_NAME..": nil is not a Class")
-    return (firstArg and type(firstArg) == "table" and firstArg.ufoType == class.ufoType)
+    return (firstArg and type(firstArg) == "table" and firstArg.className == class.className)
 end
 
 function assertIsFunctionOf(firstArg, class)

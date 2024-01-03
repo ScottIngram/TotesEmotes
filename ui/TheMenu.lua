@@ -20,6 +20,8 @@ Totes.Wormhole()
 ---@field inset table UI obj from the XML
 ---@field border table UI obj from the XML
 ---@field rowList table<number,MenuRowController> the rows currently displayed (well, the first 10 anyway)
+---@field selectedRow MenuRowController
+---@field highlightedRow MenuRowController
 
 ---@alias TheMenu TheMenuBase|KeyListenerMixin|Frame
 
@@ -92,10 +94,11 @@ function TheMenu:new()
     local pad = 0
     local elementSpacing = 2
     local view = CreateScrollBoxListLinearView(pad, pad, 15, pad, elementSpacing)
+    ---@param rowBtn MenuRowController
     view:SetElementInitializer("TotesTemplate_TheMenu_EmoteRow", function(rowBtn, rowData)
-        -- START callback
-        self:initializeRowBtn(rowBtn, rowData)
-        -- END callback
+    -- START callback
+        rowBtn:formatRow(rowData)
+    -- END callback
     end)
     ScrollUtil.InitScrollBoxListWithScrollBar(self.listing.scrollBox, self.listing.scrollBar, view)
     self.listing.scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnAcquiredFrame, self.recycleRowBtn, self); -- callback(self, rowBtn, rowData)
@@ -159,14 +162,26 @@ function TheMenu:setIcon(icon)
 end
 
 ---@param row MenuRowController
-function TheMenu:selectedRow(row)
-    if self.currentlySelected then
-        self.currentlySelected.SelectedOverlay:Hide()
+function TheMenu:selectRow(row)
+    if self.selectedRow then
+        self.selectedRow.SelectedOverlay:Hide()
     end
     if row then
         row.SelectedOverlay:Show()
     end
-    self.currentlySelected = row
+    self.selectedRow = row
+end
+
+
+---@param row MenuRowController
+function TheMenu:highlightRow(row)
+    if self.highlightedRow then
+        self.highlightedRow.HighlightOverlay:Hide()
+    end
+    if row then
+        row.HighlightOverlay:Show()
+    end
+    self.highlightedRow = row
 end
 
 function TheMenu:clearRowList()
@@ -175,16 +190,30 @@ function TheMenu:clearRowList()
     end
 end
 
-function TheMenu:scrollDown()
+function TheMenu:highlightNextRow()
     self.listing.scrollBar:ScrollStepInDirection(1)
     play(SND.SCROLL_DOWN)
 end
 
-function TheMenu:scrollUp()
+function TheMenu:highlightPreviousRow()
+    if not self.highlightedRow then
+        self.highlightedRow = self.rowList[1]
+    end
     self.listing.scrollBar:ScrollStepInDirection(-1)
     play(SND.SCROLL_UP)
 end
 
+function TheMenu:scrollDown()
+    self.listing.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Increase)
+    play(SND.SCROLL_DOWN)
+end
+
+function TheMenu:scrollUp()
+    self.listing.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Decrease)
+    play(SND.SCROLL_UP)
+end
+
+-- TODO: implement ScrollPageInDirection up & down
 -------------------------------------------------------------------------------
 -- KeyListener Event handlers
 -------------------------------------------------------------------------------
@@ -339,13 +368,13 @@ function TheMenu:setNavSubscriptions(nav)
     nav:subscribe(NavEvent.OpenNode, function(msg, navNode) self:handleNavOpenNode(msg, navNode) end, self.className)
     ---@param navNode NavNode
     nav:subscribe(NavEvent.Execute, function(msg, navNode) self:handleNavExecuteNode(msg, navNode) end, self.className)
-    nav:subscribe(NavEvent.DownKey, function() self:scrollDown() end, self.className)
-    nav:subscribe(NavEvent.UpKey, function() self:scrollUp() end, self.className)
+    nav:subscribe(NavEvent.DownKey, function() self:highlightNextRow() end, self.className)
+    nav:subscribe(NavEvent.UpKey, function() self:highlightPreviousRow() end, self.className)
     nav:subscribe(NavEvent.SearchStringChange, function(msg) self:updateSearchString(msg) end, self.className)
 end
 
 function TheMenu:handleNavExit()
-    self:selectedRow(nil)
+    self:selectRow(nil)
     self:toggle()
 end
 
@@ -359,7 +388,7 @@ function TheMenu:handleNavOpenNode(msg, navNode)
     local label = --[[navNode.name or]] EmoteCatName[id] -- no longer display the search string in place of the cat name
     self.header.fontString:SetText(label)
     self:setIcon(icon)
-    self:selectedRow(nil)
+    self:selectRow(nil)
     self:clearRowList()
 
     -- handle special case: Favorites
@@ -416,29 +445,14 @@ end
 
 ---@param rowBtn MenuRowController
 ---@param navNode NavNode
-function TheMenu:initializeRowBtn(rowBtn, navNode)
-    zebug.trace:print(rowBtn:GetOrderIndex())
-    if not rowBtn.isInit then
-        rowBtn.isInit = true
-        rowBtn.getMenu = function() return self end
-        rowBtn.nav = self.nav
-        rowBtn.scrollBox = self.listing.scrollBox
-        rowBtn:SetParentKey("btn"..rowBtn:GetOrderIndex())
-    end
-    rowBtn:formatRow(navNode)
-end
-
----@param rowBtn MenuRowController
----@param navNode NavNode
-function TheMenu:recycleRowBtn(rowBtn, rowData, c)
-    if not rowBtn.isInit then
-        return
+function TheMenu:recycleRowBtn(rowBtn, navNode)
+    if rowBtn == self.selectedRow then
+        self:selectRow(nil)
     end
 
+    ---@param row MenuRowController
     self.listing.scrollBox:ForEachFrame(function(row)
-        if rowBtn.isInit then
-            updateHotKey(row)
-        end
+        row:updateHotKey()
     end)
 end
 
@@ -446,6 +460,24 @@ end
 -------------------------------------------------------------------------------
 -- MenuRowController
 -------------------------------------------------------------------------------
+
+function MenuRowController:init()
+    zebug.error:name("init"):print("initializing")
+    self.isInit = true
+    self.getMenu = function() return TheMenu end
+    self.nav = TheMenu.nav
+    self.scrollBox = TheMenu.listing.scrollBox
+    --self:SetParentKey("btn".. self:GetOrderIndex())
+end
+
+function MenuRowController:getMenu()
+    return TheMenu
+end
+
+function MenuRowController:getFrameIndex()
+    --zebug.error:print("row count", TheMenu.listing.scrollBox:GetFrameCount() )
+
+end
 
 ---@param navNode NavNode
 function MenuRowController:formatRow(navNode)
@@ -470,11 +502,13 @@ function MenuRowController:formatRow(navNode)
         zebug.trace:print("emote",emote.name, "cat", EmoteCatName[emote.cat], (emote.audio and "A") or "*", (emote.viz and "V") or "*", "emote",emote.name, "icon",emote.icon)
     end
 
-    updateHotKey(self)
+    self:updateHotKey()
 end
 
-function updateHotKey(row)
-    local n = row:GetOrderIndex()
+function MenuRowController:updateHotKey()
+    if not self.navNode then return end
+
+    local n = self:GetOrderIndex()
     local indexOfFirstVisibleRow = TheMenu.listView:GetDataIndexBegin()
 
     -- put a number next to the first 10 rows (or more depending on user config opts)
@@ -489,7 +523,7 @@ function updateHotKey(row)
         local bump = (DB.opts.quickKeyBacktick and 1) or 0
         ---@type string
         local display = n - bump - indexOfFirstVisibleRow + 1
-        TheMenu.rowList[display] = row
+        TheMenu.rowList[display] = self
 
         if display == 10 then
             display = "0"
@@ -501,17 +535,12 @@ function updateHotKey(row)
             display = "="
         end
 
-        zebug.trace:print("adding self to rowList", row.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display",display, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
+        zebug.trace:print("adding self to rowList", self.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display",display, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
 
-        row.audioBtn.text:SetText(display)
+        self.audioBtn.text:SetText(display)
     else
-        row.audioBtn.text:SetText(nil)
+        self.audioBtn.text:SetText(nil)
     end
-end
-
-function MenuRowController:OnLoad(...)
-    -- this doesn't appear to be called
-    zebug.trace:name("OnLoad"):print("OnLoad args", ...)
 end
 
 ---@param mouseClick MouseClick
@@ -522,7 +551,7 @@ function MenuRowController:OnClick(mouseClick, isDown)
         self.nav:pickNode(self.navNode)
     else
         EmoteDefinitions:doEmote(emote)
-        self:getMenu():selectedRow(self)
+        self:getMenu():selectRow(self)
         self.nav:notifySubs(NavEvent.OnEmote, "MenuRowController:OnClick", emote)
     end
 end

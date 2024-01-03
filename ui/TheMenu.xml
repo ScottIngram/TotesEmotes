@@ -195,7 +195,7 @@
         </Layer>
     </Layers>
     <Scripts>
-        <OnClick method="OnLoad"/>
+        <OnLoad method="init"/>
         <OnClick method="OnClick"/>
     </Scripts>
     </Button>
