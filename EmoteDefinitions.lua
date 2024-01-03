@@ -68,7 +68,7 @@ EmoteDefinitions.list = {
     { name="apologize",    cat=EmoteCat.Sad,     audio=true, alts={"sorry"}, },
     { name="applaud",      cat=EmoteCat.Happy,   viz=true, audio=true, alts={"bravo", "applause"}, },
     { name="arm",          cat=EmoteCat.Happy,   alts={"stretch"},  }, -- custom alt
-    { name="attackmytarget", cat=EmoteCat.Angry, viz=true, audio=true, alts={"attacktarget"}, },
+    { name="attacktarget", cat=EmoteCat.Combat , viz=true, audio=true, fix="attackmytarget", },
     { name="awe",          cat=EmoteCat.Happy,   },
     { name="backpack",     cat=EmoteCat.Neutral, alts={"pack"}, },
     { name="badfeeling",   cat=EmoteCat.Sad,     alts={"bad"}, },
@@ -141,7 +141,7 @@ EmoteDefinitions.list = {
     { name="flex",         cat=EmoteCat.Happy,   viz=true, alts={"strong"}, },
     { name="flirt",        cat=EmoteCat.Happy,   viz=true, audio=true, },
     { name="flop",         cat=EmoteCat.Sad,     },
-    { name="follow",       cat=EmoteCat.Combat,  viz=true, audio=true, alts={"followme"}, },
+    { name="followme",     cat=EmoteCat.Combat,  viz=true, audio=true, fix="FOLLOW", },
     { name="forthealliance", cat=EmoteCat.Happy, viz=true, audio=true, },
     { name="forthehorde",  cat=EmoteCat.Happy,   viz=true, audio=true, },
     { name="frown",        cat=EmoteCat.Angry,   alts={"disappointed"}, },
@@ -231,7 +231,7 @@ EmoteDefinitions.list = {
     { name="pulse",        cat=EmoteCat.Neutral, },
     { name="punch",        cat=EmoteCat.Angry,   },
     { name="purr",         cat=EmoteCat.Happy,   },
-    { name="puzzle",       cat=EmoteCat.Sad,     viz=true, alts={"puzzled"}, },
+    { name="puzzle",       cat=EmoteCat.Sad,     viz=true, --[[alts={"puzzled"},]] },
     { name="quack",        cat=EmoteCat.Neutral, viz=true, },
     { name="raise",        cat=EmoteCat.Neutral, alts={"volunteer"}, },
     { name="rasp",         cat=EmoteCat.Angry,   viz=true, audio=true, },
@@ -315,7 +315,7 @@ EmoteDefinitions.list = {
     { name="wave",         cat=EmoteCat.Happy,   viz=true, },
     { name="welcome",      cat=EmoteCat.Happy,   viz=true, audio=true, },
     { name="whine",        cat=EmoteCat.Sad,     },
-    { name="whistle",      cat=EmoteCat.Sad,     audio=true, },
+    { name="whistle",      cat=EmoteCat.Happy,   audio=true, },
     { name="whoa",         cat=EmoteCat.Happy,   viz=true, audio=true, },
     { name="wince",        cat=EmoteCat.Sad,     },
     { name="wink",         cat=EmoteCat.Happy,   },
@@ -334,7 +334,9 @@ for i, emote in ipairs(EmoteDefinitions.list) do
     if emote.alts then
         for j, altName in ipairs(emote.alts) do
             local copy = deepcopy(emote)
-            copy.fix = emote.name -- the original emote
+            if not copy.fix then
+                copy.fix = emote.name -- the original emote
+            end
             copy.name = altName
             EmoteDefinitions.map[altName] = copy
         end
@@ -546,7 +548,9 @@ function EmoteDefinitions:convertToNavNode(emoteDef, parentNavNode)
         local results = { result }
         for j, altName in ipairs(emoteDef.alts) do
             local emoteCopy = deepcopy(emoteDef)
-            emoteCopy.fix = emoteDef.name -- the original emote
+            if not emoteCopy.fix then
+                emoteCopy.fix = emoteDef.name -- the original emote
+            end
             emoteCopy.name = altName
             local nodeCopy = deepcopy(result)
             nodeCopy.name = altName
