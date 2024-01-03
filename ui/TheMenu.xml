@@ -5,14 +5,14 @@
            virtual     = "true"
            inherits    = "ButtonFrameBaseTemplate"
            mixin       = "TotesTheMenuController"
-           frameLevel  = "600"
+           frameLevel  = "550"
            toplevel     = "true"
            movable     = "true"
            resizable   = "true"
            clampedToScreen = "true"
            hidden      = "true"
     >
-        <Size x="200" y="600"/>
+        <Size x="200" y="380"/>
         <ResizeBounds>
             <minResize x="200" y="200"/>
             <maxResize x="500" y="1000"/>
@@ -21,7 +21,7 @@
             <Anchor point="BOTTOMRIGHT" relativeKey="$parent" relativePoint="TOPLEFT" x="40" y="-60" />
         </Anchors>
         <Frames>
-            <Frame parentKey="header" frameLevel="510">
+            <Frame parentKey="header">
                 <Size x="0" y="20"/>
                 <Anchors>
                     <Anchor point="TOPLEFT" x="60" y="-30"/>
