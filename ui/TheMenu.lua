@@ -19,9 +19,10 @@ Totes.Wormhole()
 ---@field closeBtn table UI obj from the XML
 ---@field inset table UI obj from the XML
 ---@field border table UI obj from the XML
----@field rowList table<number,MenuRowController> the rows currently displayed (well, the first 10 anyway)
----@field selectedRow MenuRowController
----@field highlightedRow MenuRowController
+---@field rowList table<number,MenuRowButton> the rows currently displayed (well, the first 10 anyway)
+---@field selectedRow MenuRowButton
+---@field highlightedRow MenuRowButton
+---@field scrollBox ScrollBoxListViewMixin from Blizz's ScrollBoxListView.lua
 
 ---@alias TheMenu TheMenuBase|KeyListenerMixin|Frame
 
@@ -35,7 +36,7 @@ _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
 TheMenuResizerBtnController = { className = "TheMenuResizerBtnController" }
 _G["TotesTheMenuResizerBtnController"] = TheMenuResizerBtnController -- export for use by the XML
 
----@class MenuRowController
+---@class MenuRowButton
 ---@field className string
 ---@field emote EmoteDefinition
 ---@field navNode NavNode
@@ -44,8 +45,8 @@ _G["TotesTheMenuResizerBtnController"] = TheMenuResizerBtnController -- export f
 ---@field audioBtn table UI obj from the XML
 ---@field vizBtn table UI obj from the XML
 ---@field faveBtn FavoriteButton UI obj from the XML
-MenuRowController = { className = "MenuRowController" }
-_G["TotesTheMenuRowController"] = MenuRowController -- export for use by the XML which will create a new instance of MenuRowController
+MenuRowButton = { className = "MenuRowButton" }
+_G["TotesTheMenuRowButton"] = MenuRowButton -- export for use by the XML which will create a new instance of MenuRowButton
 
 -------------------------------------------------------------------------------
 -- Constants
@@ -77,6 +78,7 @@ function TheMenu:new()
     self.titleBar = self.TitleContainer
     self.border   = self.NineSlice
     self.closeBtn = _G[self:GetName().."CloseButton"]
+    self.scrollBox = self.listDiv.scrollBox
 
     -- Appearance
     self:setIcon(ICON_TOP_MENU)
@@ -90,20 +92,7 @@ function TheMenu:new()
     self:startKeyListener(KeyListenerScope.alwaysWhileVisible)
     --self.searchBox:Disable() -- prevents user input effectively making it a display-only UI
 
-    -- scroll area
-    local pad = 0
-    local elementSpacing = 2
-    local view = CreateScrollBoxListLinearView(pad, pad, 15, pad, elementSpacing)
-    ---@param rowBtn MenuRowController
-    view:SetElementInitializer("TotesTemplate_TheMenu_EmoteRow", function(rowBtn, rowData)
-    -- START callback
-        rowBtn:formatRow(rowData)
-    -- END callback
-    end)
-    ScrollUtil.InitScrollBoxListWithScrollBar(self.listing.scrollBox, self.listing.scrollBar, view)
-    self.listing.scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnAcquiredFrame, self.recycleRowBtn, self); -- callback(self, rowBtn, rowData)
-    self.listView = view
-    --self.listing.scrollBar:SetShown(self.listing.scrollBox:HasScrollableExtent())
+    self:makeScrollArea()
 
     -- tooltip
     self.icon.portrait:SetScript("OnEnter", iconOnEnter)
@@ -113,14 +102,20 @@ function TheMenu:new()
     return self
 end
 
+function TheMenu:makeScrollArea()
+    local pad = 0
+    local elementSpacing = 2
+    local view = CreateScrollBoxListLinearView(pad, pad, 15, pad, elementSpacing)
+    ---@param rowBtn MenuRowButton
+    view:SetElementInitializer("TotesTemplate_TheMenu_RowBtn", function(rowBtn, rowData) rowBtn:formatRow(rowData) end)
+    ScrollUtil.InitScrollBoxListWithScrollBar(self.scrollBox, self.listDiv.scrollBar, view)
+    self.scrollBox:RegisterCallback(ScrollBoxListMixin.Event.OnAcquiredFrame, self.recycleRowBtn, self); -- callback(self, rowBtn, rowData)
+end
+
 function iconOnEnter(self)
     GameTooltip:SetOwner(self, "ANCHOR_LEFT", 25, -25)
     GameTooltip:SetText(L10N.getTipsForToolTip())
     GameTooltip:Show()
-end
-
-function iconOnExit(self)
-    GameTooltip:Hide()
 end
 
 ---@param mouseClick MouseClick
@@ -135,12 +130,12 @@ end
 function TheMenu:setListing(navNodesList)
     if not self.dataProvider then
         self.dataProvider = CreateDataProvider(navNodesList)
-        self.listing.scrollBox:SetDataProvider(self.dataProvider)
+        self.scrollBox:SetDataProvider(self.dataProvider)
     end
 
     self.dataProvider:Flush()
     self.dataProvider:InsertTable(navNodesList)
-    self.listing.scrollBox:OnViewDataChanged()
+    self.scrollBox:OnViewDataChanged()
 end
 
 function TheMenu:toggle()
@@ -161,7 +156,7 @@ function TheMenu:setIcon(icon)
     self.icon.portrait:SetTexture(icon)
 end
 
----@param row MenuRowController
+---@param row MenuRowButton
 function TheMenu:selectRow(row)
     if self.selectedRow then
         self.selectedRow.SelectedOverlay:Hide()
@@ -172,8 +167,7 @@ function TheMenu:selectRow(row)
     self.selectedRow = row
 end
 
-
----@param row MenuRowController
+---@param row MenuRowButton
 function TheMenu:highlightRow(row)
     if self.highlightedRow then
         self.highlightedRow.HighlightOverlay:Hide()
@@ -190,8 +184,14 @@ function TheMenu:clearRowList()
     end
 end
 
+function TheMenu:getHighlightedRow()
+    if not self.highlightedRow then
+        --local firstVisibleRow = self.scrollBox
+        --self.highlightedRow = nil
+    end
+end
+
 function TheMenu:highlightNextRow()
-    self.listing.scrollBar:ScrollStepInDirection(1)
     play(SND.SCROLL_DOWN)
 end
 
@@ -199,17 +199,17 @@ function TheMenu:highlightPreviousRow()
     if not self.highlightedRow then
         self.highlightedRow = self.rowList[1]
     end
-    self.listing.scrollBar:ScrollStepInDirection(-1)
+    self.listDiv.scrollBar:ScrollStepInDirection(-1)
     play(SND.SCROLL_UP)
 end
 
 function TheMenu:scrollDown()
-    self.listing.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Increase)
+    self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Increase)
     play(SND.SCROLL_DOWN)
 end
 
 function TheMenu:scrollUp()
-    self.listing.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Decrease)
+    self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Decrease)
     play(SND.SCROLL_UP)
 end
 
@@ -430,7 +430,7 @@ end
 
 
 ---@param navNode NavNode
----@return MenuRowController
+---@return MenuRowButton
 function TheMenu:getRowForNavNode(navNode)
     local n = navNode.id
     zebug.trace:dumpKeys(self.rowList)
@@ -440,47 +440,57 @@ function TheMenu:getRowForNavNode(navNode)
 end
 
 -------------------------------------------------------------------------------
--- For the MenuRowController
+-- For the MenuRowButton
 -------------------------------------------------------------------------------
 
----@param rowBtn MenuRowController
+---@param rowBtn MenuRowButton
 ---@param navNode NavNode
 function TheMenu:recycleRowBtn(rowBtn, navNode)
     if rowBtn == self.selectedRow then
         self:selectRow(nil)
     end
 
-    ---@param row MenuRowController
-    self.listing.scrollBox:ForEachFrame(function(row)
+    ---@param row MenuRowButton
+    self.scrollBox:ForEachFrame(function(row)
         row:updateHotKey()
     end)
 end
 
-
 -------------------------------------------------------------------------------
--- MenuRowController
+-- MenuRowButton
 -------------------------------------------------------------------------------
 
-function MenuRowController:init()
-    zebug.error:name("init"):print("initializing")
+function MenuRowButton:onLoad()
+    zebug.error:name("init"):print("initializing... grandparent", self:getScrollBox():GetName(), "foo",self:getScrollBox():GetDataIndexBegin())
     self.isInit = true
-    self.getMenu = function() return TheMenu end
-    self.nav = TheMenu.nav
-    self.scrollBox = TheMenu.listing.scrollBox
     --self:SetParentKey("btn".. self:GetOrderIndex())
 end
 
-function MenuRowController:getMenu()
+function MenuRowButton:getMenu()
     return TheMenu
 end
 
-function MenuRowController:getFrameIndex()
-    --zebug.error:print("row count", TheMenu.listing.scrollBox:GetFrameCount() )
-
+function MenuRowButton:getNavigator()
+    return self:getMenu().nav
 end
 
+function MenuRowButton:getScrollBox()
+    return self:GetParent():GetParent()
+end
+
+function MenuRowButton:getFrameIndex()
+    --zebug.error:print("row count", TheMenu.scrollBox:GetFrameCount() )
+    local n = self:GetOrderIndex()
+    local indexOfFirstVisibleRow = self:getScrollBox():GetDataIndexBegin() -- Also GetDataIndexEnd()
+    return n - indexOfFirstVisibleRow + 1
+end
+
+function MenuRowButton:isFirstVisibleRow()
+end
+
+
 ---@param navNode NavNode
-function MenuRowController:formatRow(navNode)
+function MenuRowButton:formatRow(navNode)
     --zebug.trace:dumpKeys(navNode)
     --zebug.trace:dumpKeys(navNode.domainData)
     self.navNode = navNode
@@ -505,11 +515,11 @@ function MenuRowController:formatRow(navNode)
     self:updateHotKey()
 end
 
-function MenuRowController:updateHotKey()
+function MenuRowButton:updateHotKey()
     if not self.navNode then return end
 
     local n = self:GetOrderIndex()
-    local indexOfFirstVisibleRow = TheMenu.listView:GetDataIndexBegin()
+    local indexOfFirstVisibleRow = self:getScrollBox():GetDataIndexBegin()
 
     -- put a number next to the first 10 rows (or more depending on user config opts)
     local howManyQuickKeys = 10
@@ -544,15 +554,15 @@ function MenuRowController:updateHotKey()
 end
 
 ---@param mouseClick MouseClick
-function MenuRowController:OnClick(mouseClick, isDown)
+function MenuRowButton:onClick(mouseClick, isDown)
     local emote = self.emote
-    zebug.trace:name("OnClick"):print("emote",emote.name, "mouseClick",mouseClick, "isDown",isDown)
+    zebug.trace:name("onClick"):print("emote",emote.name, "mouseClick",mouseClick, "isDown",isDown)
     if self.navNode.kids then
-        self.nav:pickNode(self.navNode)
+        self:getNavigator():pickNode(self.navNode)
     else
         EmoteDefinitions:doEmote(emote)
         self:getMenu():selectRow(self)
-        self.nav:notifySubs(NavEvent.OnEmote, "MenuRowController:OnClick", emote)
+        self:getNavigator():notifySubs(NavEvent.OnEmote, "MenuRowButton:OnClick", emote)
     end
 end
 

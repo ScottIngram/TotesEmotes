@@ -319,7 +319,7 @@ function Navigator:inputNumber(num)
     zebug.info:print("num",num)
     if not num then return false end
     -- this is a shameful hack: tightly coupled with TheMenu class.  TODO: better
-    local offset = (TheMenu.listView:GetDataIndexBegin() or 0) - 1
+    local offset = (TheMenu.scrollBox:GetDataIndexBegin() or 0) - 1
     local selectedNode = self:getCurrentNode()
     local pickedKid = selectedNode.kids[num + offset]
     if pickedKid then

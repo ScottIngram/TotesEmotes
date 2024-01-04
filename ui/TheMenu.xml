@@ -40,13 +40,13 @@
                     </Layer>
                 </Layers>
             </Frame>
-            <Frame parentKey="listing" inherits="InsetFrameTemplate">
+            <Frame name="$parentListDiv" parentKey="listDiv" inherits="InsetFrameTemplate">
                 <Anchors>
                     <Anchor point="TOPLEFT" x="4" y="-60" />
                     <Anchor point="BOTTOMRIGHT" x="-6" y="26" />
                 </Anchors>
                 <Frames>
-                    <Frame parentKey="scrollBox" inherits="WowScrollBoxList">
+                    <Frame name="$parentScrollBox" parentKey="scrollBox" inherits="WowScrollBoxList">
                         <Anchors>
                             <Anchor point="TOPLEFT"  x="3" y="-5"/>
                             <Anchor point="BOTTOMRIGHT" x="-20" y="5"/>
@@ -112,9 +112,9 @@
         <HighlightTexture parentKey="HighlightTexture" atlas="auctionhouse-icon-favorite" alphaMode="ADD"/>
     </Button>
 
-    <Button name = "TotesTemplate_TheMenu_EmoteRow"
+    <Button name = "TotesTemplate_TheMenu_RowBtn"
             virtual = "true"
-            mixin   = "TotesTheMenuRowController"
+            mixin   = "TotesTheMenuRowButton"
             registerForClicks = "RightButtonUp, LeftButtonUp"
     >
     <Size y="20"/>
@@ -195,8 +195,8 @@
         </Layer>
     </Layers>
     <Scripts>
-        <OnLoad method="init"/>
-        <OnClick method="OnClick"/>
+        <OnLoad method="onLoad"/>
+        <OnClick method="onClick"/>
     </Scripts>
     </Button>
 
