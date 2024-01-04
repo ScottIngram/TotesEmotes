@@ -19,7 +19,7 @@ Totes.Wormhole()
 ---@field closeBtn table UI obj from the XML
 ---@field inset table UI obj from the XML
 ---@field border table UI obj from the XML
----@field rowList table<number,MenuRowButton> the rows currently displayed
+---@field visibleRowList table<number,MenuRowButton> the rows currently displayed
 ---@field selectedRow MenuRowButton
 ---@field highlightedRow MenuRowButton
 ---@field scrollBox ScrollBoxListViewMixin from Blizz's ScrollBoxListView.lua
@@ -27,7 +27,7 @@ Totes.Wormhole()
 ---@alias TheMenu TheMenuBase|KeyListenerMixin|Frame
 
 ---@type TheMenuBase
-TheMenu = { className = "TheMenu", rowList={}, }
+TheMenu = { className = "TheMenu", visibleRowList={}, }
 KeyListenerMixin:inject(TheMenu)
 _G["TotesTheMenuController"] = TheMenu -- export for use by the XML
 
@@ -378,8 +378,8 @@ end
 ---@return MenuRowButton
 function TheMenu:getRowForNavNode(navNode)
     local n = navNode.id
-    zebug.trace:dumpKeys(self.rowList)
-    local result = self.rowList[n]
+    zebug.trace:dumpKeys(self.visibleRowList)
+    local result = self.visibleRowList[n]
     zebug.trace:print("n",n, "result",result)
     return result
 end
@@ -397,18 +397,18 @@ function TheMenu:getPhysicalRowCount()
 end
 
 function TheMenu:getVisibleRows()
-    if not self.rowList or (#self.rowList == 0) then
-        self.rowList = {}
+    if not self.visibleRowList or (#self.visibleRowList == 0) then
+        self.visibleRowList = {}
         self.scrollBox:ForEachFrame(function(row)
-            self.rowList[#self.rowList+1] = row
+            self.visibleRowList[#self.visibleRowList +1] = row
         end)
     end
-    return self.rowList
+    return self.visibleRowList
 end
 
 function TheMenu:clearRowList()
-    for i=#self.rowList, 1, -1 do
-        self.rowList[i] = nil
+    for i=#self.visibleRowList, 1, -1 do
+        self.visibleRowList[i] = nil
     end
 end
 
@@ -442,7 +442,7 @@ function TheMenu:selectRowByVisibleIndex(visibleIndex)
     local visibleRowCount = self:getVisibleRowCount()
     zebug.error:print("selecting by visibleIndex", visibleIndex)
     if visibleIndex >= 1 and visibleIndex <= visibleRowCount then
-        local row = self.rowList[visibleIndex]
+        local row = self.visibleRowList[visibleIndex]
         self:selectRow(row)
     else
         local currentPhysicalIndex = self.selectedRow:GetOrderIndex()
@@ -584,8 +584,8 @@ end
 function MenuRowButton:updateHotKey()
     if not self.navNode then return end
 
-    local n = self:GetOrderIndex()
-    local indexOfFirstVisibleRow = self:getScrollBox():GetDataIndexBegin()
+    local physicalIndex = self:GetOrderIndex()
+    local physicalIndexOfFirstVisibleRow = self:getScrollBox():GetDataIndexBegin()
 
     -- put a number next to the first 10 rows (or more depending on user config opts)
     local howManyQuickKeys = 10
@@ -593,29 +593,27 @@ function MenuRowButton:updateHotKey()
             + ((DB.opts.quickKeyDash and 1) or 0)
             + ((DB.opts.quickKeyEqual and 1) or 0)
 
-    local indexEnder = 90 -- indexOfFirstVisibleRow + howManyQuickKeys
+    local backtickBump = (DB.opts.quickKeyBacktick and 1) or 0
+    local visibleIndex = physicalIndex - physicalIndexOfFirstVisibleRow - backtickBump  + 1
+    TheMenu.visibleRowList[visibleIndex] = self
+    self.visibleIndex = visibleIndex
 
-    local bump = (DB.opts.quickKeyBacktick and 1) or 0
-    local visibleRowCount = n - bump - indexOfFirstVisibleRow + 1
-    TheMenu.rowList[visibleRowCount] = self
-    self.visibleIndex = visibleRowCount
-
-    if n < indexEnder then
+    if visibleIndex <= howManyQuickKeys then
         ---@type string
 
-        if visibleRowCount == 10 then
-            visibleRowCount = "0"
-        elseif DB.opts.quickKeyBacktick and visibleRowCount ==0 then
-            visibleRowCount = "`"
-        elseif DB.opts.quickKeyDash and visibleRowCount ==11 then
-            visibleRowCount = "-"
-        elseif DB.opts.quickKeyEqual and visibleRowCount ==12 then
-            visibleRowCount = "="
+        if visibleIndex == 10 then
+            visibleIndex = "0"
+        elseif DB.opts.quickKeyBacktick and visibleIndex == 0 then
+            visibleIndex = "`"
+        elseif DB.opts.quickKeyDash and visibleIndex == 11 then
+            visibleIndex = "-"
+        elseif DB.opts.quickKeyEqual and visibleIndex == 12 then
+            visibleIndex = "="
         end
 
-        zebug.trace:print("adding self to rowList", self.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display", visibleRowCount, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
+        zebug.trace:print("adding self to rowList", self.emote.name, "at index n", physicalIndex, "howManyQuickKeys",howManyQuickKeys, "bump", backtickBump, "display", visibleIndex, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
 
-        self.audioBtn.text:SetText(visibleRowCount)
+        self.audioBtn.text:SetText(visibleIndex)
     else
         self.audioBtn.text:SetText(nil)
     end
