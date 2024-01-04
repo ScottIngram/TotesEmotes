@@ -180,10 +180,8 @@ function Navigator:handleKeyPress(key)
     --    return KeyListenerResult.consumed
     --end
 
-    -- the LEFT and UP keys exit the current level and goes up one
     if
     key == "ESCAPE" or
-    key == "LEFT" or
     ((key == "DELETE" or key == "BACKSPACE") and not self.searchString) then
         self:goUp()
         return KeyListenerResult.consumed
@@ -323,7 +321,7 @@ function Navigator:inputNumber(num)
     local selectedNode = self:getCurrentNode()
     local pickedKid = selectedNode.kids[num + offset]
     if pickedKid then
-        pickedKid.id = num -- is this still needed?
+        pickedKid.id = num -- tell TheMenu what number-key was pressed
         self:pickNode(pickedKid)
         return KeyListenerResult.consumed
     end

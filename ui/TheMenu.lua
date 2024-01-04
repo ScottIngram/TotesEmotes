@@ -19,7 +19,7 @@ Totes.Wormhole()
 ---@field closeBtn table UI obj from the XML
 ---@field inset table UI obj from the XML
 ---@field border table UI obj from the XML
----@field rowList table<number,MenuRowButton> the rows currently displayed (well, the first 10 anyway)
+---@field rowList table<number,MenuRowButton> the rows currently displayed
 ---@field selectedRow MenuRowButton
 ---@field highlightedRow MenuRowButton
 ---@field scrollBox ScrollBoxListViewMixin from Blizz's ScrollBoxListView.lua
@@ -45,6 +45,7 @@ _G["TotesTheMenuResizerBtnController"] = TheMenuResizerBtnController -- export f
 ---@field audioBtn table UI obj from the XML
 ---@field vizBtn table UI obj from the XML
 ---@field faveBtn FavoriteButton UI obj from the XML
+---@field visibleIndex number the visible row's number
 MenuRowButton = { className = "MenuRowButton" }
 _G["TotesTheMenuRowButton"] = MenuRowButton -- export for use by the XML which will create a new instance of MenuRowButton
 
@@ -156,64 +157,6 @@ function TheMenu:setIcon(icon)
     self.icon.portrait:SetTexture(icon)
 end
 
----@param row MenuRowButton
-function TheMenu:selectRow(row)
-    if self.selectedRow then
-        self.selectedRow.SelectedOverlay:Hide()
-    end
-    if row then
-        row.SelectedOverlay:Show()
-    end
-    self.selectedRow = row
-end
-
----@param row MenuRowButton
-function TheMenu:highlightRow(row)
-    if self.highlightedRow then
-        self.highlightedRow.HighlightOverlay:Hide()
-    end
-    if row then
-        row.HighlightOverlay:Show()
-    end
-    self.highlightedRow = row
-end
-
-function TheMenu:clearRowList()
-    for i=#self.rowList, 1, -1 do
-        self.rowList[i] = nil
-    end
-end
-
-function TheMenu:getHighlightedRow()
-    if not self.highlightedRow then
-        --local firstVisibleRow = self.scrollBox
-        --self.highlightedRow = nil
-    end
-end
-
-function TheMenu:highlightNextRow()
-    play(SND.SCROLL_DOWN)
-end
-
-function TheMenu:highlightPreviousRow()
-    if not self.highlightedRow then
-        self.highlightedRow = self.rowList[1]
-    end
-    self.listDiv.scrollBar:ScrollStepInDirection(-1)
-    play(SND.SCROLL_UP)
-end
-
-function TheMenu:scrollDown()
-    self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Increase)
-    play(SND.SCROLL_DOWN)
-end
-
-function TheMenu:scrollUp()
-    self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Decrease)
-    play(SND.SCROLL_UP)
-end
-
--- TODO: implement ScrollPageInDirection up & down
 -------------------------------------------------------------------------------
 -- KeyListener Event handlers
 -------------------------------------------------------------------------------
@@ -351,9 +294,11 @@ function TheMenuResizerBtnController:OnMouseDown()
 end
 
 function TheMenuResizerBtnController:OnMouseUp()
-    self:GetParent():StopMovingOrSizing("BOTTOMRIGHT")
-    self:GetParent():saveSizeToDb()
-    self:GetParent():savePositionToDb() -- because Bliz's GetPoint() API is spastic and arbitarily changes its coordinate system if the size changes among other things
+    local p = self:GetParent()
+    zebug.warn:name("init"):print("index of last row",p.scrollBox:GetDataIndexEnd())
+    p:StopMovingOrSizing("BOTTOMRIGHT")
+    p:saveSizeToDb()
+    p:savePositionToDb() -- because Bliz's GetPoint() API is spastic and arbitarily changes its coordinate system if the size changes among other things
 end
 
 -------------------------------------------------------------------------------
@@ -368,8 +313,8 @@ function TheMenu:setNavSubscriptions(nav)
     nav:subscribe(NavEvent.OpenNode, function(msg, navNode) self:handleNavOpenNode(msg, navNode) end, self.className)
     ---@param navNode NavNode
     nav:subscribe(NavEvent.Execute, function(msg, navNode) self:handleNavExecuteNode(msg, navNode) end, self.className)
-    nav:subscribe(NavEvent.DownKey, function() self:highlightNextRow() end, self.className)
-    nav:subscribe(NavEvent.UpKey, function() self:highlightPreviousRow() end, self.className)
+    nav:subscribe(NavEvent.DownKey, function() self:selectNextRow() end, self.className)
+    nav:subscribe(NavEvent.UpKey, function() self:selectPreviousRow() end, self.className)
     nav:subscribe(NavEvent.SearchStringChange, function(msg) self:updateSearchString(msg) end, self.className)
 end
 
@@ -440,6 +385,127 @@ function TheMenu:getRowForNavNode(navNode)
 end
 
 -------------------------------------------------------------------------------
+-- Scroll Box and Rows
+-------------------------------------------------------------------------------
+
+function TheMenu:getVisibleRowCount()
+    return self.scrollBox:GetDataIndexEnd() - self.scrollBox:GetDataIndexBegin() + 1
+end
+
+function TheMenu:getPhysicalRowCount()
+    return self.scrollBox:GetDataProviderSize()
+end
+
+function TheMenu:getVisibleRows()
+    if not self.rowList or (#self.rowList == 0) then
+        self.rowList = {}
+        self.scrollBox:ForEachFrame(function(row)
+            self.rowList[#self.rowList+1] = row
+        end)
+    end
+    return self.rowList
+end
+
+function TheMenu:clearRowList()
+    for i=#self.rowList, 1, -1 do
+        self.rowList[i] = nil
+    end
+end
+
+function TheMenu:printRows()
+    self.scrollBox:ForEachFrame(function(row)
+        zebug.warn:print("row",row.name, "index", row.visibleIndex)
+    end)
+end
+
+-------------------------------------------------------------------------------
+-- Row highlighting and selection
+-------------------------------------------------------------------------------
+
+function TheMenu:selectNextRow()
+    self:selectAdjacentRow(1)
+end
+
+function TheMenu:selectPreviousRow()
+    self:selectAdjacentRow(-1)
+end
+
+function TheMenu:selectAdjacentRow(increment)
+    if self.selectedRow then
+        self:selectRowByVisibleIndex(self.selectedRow.visibleIndex + increment)
+    else
+        self:selectRowByVisibleIndex(1)
+    end
+end
+
+function TheMenu:selectRowByVisibleIndex(visibleIndex)
+    local visibleRowCount = self:getVisibleRowCount()
+    zebug.error:print("selecting by visibleIndex", visibleIndex)
+    if visibleIndex >= 1 and visibleIndex <= visibleRowCount then
+        local row = self.rowList[visibleIndex]
+        self:selectRow(row)
+    else
+        local currentPhysicalIndex = self.selectedRow:GetOrderIndex()
+        if visibleIndex < 1 then
+            if currentPhysicalIndex == 1 then
+                -- don't scroll before the start of the list
+                zebug.error:print("already at START of list - aborting UP scroll")
+                return
+            end
+
+            self:scrollUp()
+            zebug.warn:print("scrolled UP.  selected row's new index",self.selectedRow.visibleIndex)
+            self:selectPreviousRow()
+        elseif visibleIndex > visibleRowCount then
+            if currentPhysicalIndex == self:getPhysicalRowCount() then
+                -- don't scroll past the end of the list
+                zebug.error:print("already at END of list - aborting DOWN scroll")
+                return
+            end
+            self:scrollDown()
+            zebug.warn:print("scrolled DOWN.  selected row's new index",self.selectedRow.visibleIndex)
+            self:selectNextRow()
+        else
+        end
+    end
+
+end
+
+---@param row MenuRowButton
+function TheMenu:selectRow(row)
+    if self.selectedRow then
+        self.selectedRow.SelectedOverlay:Hide()
+    end
+    if row then
+        row.SelectedOverlay:Show()
+        zebug.error:print("selecting row",row.name, "index", row.visibleIndex)
+    else
+        zebug.warn:print("can't select a NIL row")
+    end
+    self.selectedRow = row
+end
+
+-------------------------------------------------------------------------------
+-- programmatic scrolling
+-- TODO: implement ScrollPageInDirection up & down
+-------------------------------------------------------------------------------
+
+function TheMenu:scrollDown()
+    zebug.error:print("down")
+    self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Increase)
+    play(SND.SCROLL_DOWN)
+    self:printRows()
+end
+
+function TheMenu:scrollUp()
+    zebug.error:print("up")
+    self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Decrease)
+    play(SND.SCROLL_UP)
+    self:printRows()
+end
+
+
+-------------------------------------------------------------------------------
 -- For the MenuRowButton
 -------------------------------------------------------------------------------
 
@@ -447,7 +513,7 @@ end
 ---@param navNode NavNode
 function TheMenu:recycleRowBtn(rowBtn, navNode)
     if rowBtn == self.selectedRow then
-        self:selectRow(nil)
+        --self:selectRow(nil)
     end
 
     ---@param row MenuRowButton
@@ -461,7 +527,7 @@ end
 -------------------------------------------------------------------------------
 
 function MenuRowButton:onLoad()
-    zebug.error:name("init"):print("initializing... grandparent", self:getScrollBox():GetName(), "foo",self:getScrollBox():GetDataIndexBegin())
+    zebug.error:name("init"):print("initializing... grandparent", self:getScrollBox():GetName(), "GetDataIndexEnd",self:getScrollBox():GetDataIndexEnd())
     self.isInit = true
     --self:SetParentKey("btn".. self:GetOrderIndex())
 end
@@ -527,27 +593,29 @@ function MenuRowButton:updateHotKey()
             + ((DB.opts.quickKeyDash and 1) or 0)
             + ((DB.opts.quickKeyEqual and 1) or 0)
 
-    local indexEnder = indexOfFirstVisibleRow + howManyQuickKeys
+    local indexEnder = 90 -- indexOfFirstVisibleRow + howManyQuickKeys
+
+    local bump = (DB.opts.quickKeyBacktick and 1) or 0
+    local visibleRowCount = n - bump - indexOfFirstVisibleRow + 1
+    TheMenu.rowList[visibleRowCount] = self
+    self.visibleIndex = visibleRowCount
 
     if n < indexEnder then
-        local bump = (DB.opts.quickKeyBacktick and 1) or 0
         ---@type string
-        local display = n - bump - indexOfFirstVisibleRow + 1
-        TheMenu.rowList[display] = self
 
-        if display == 10 then
-            display = "0"
-        elseif DB.opts.quickKeyBacktick and display==0 then
-            display = "`"
-        elseif DB.opts.quickKeyDash and display==11 then
-            display = "-"
-        elseif DB.opts.quickKeyEqual and display==12 then
-            display = "="
+        if visibleRowCount == 10 then
+            visibleRowCount = "0"
+        elseif DB.opts.quickKeyBacktick and visibleRowCount ==0 then
+            visibleRowCount = "`"
+        elseif DB.opts.quickKeyDash and visibleRowCount ==11 then
+            visibleRowCount = "-"
+        elseif DB.opts.quickKeyEqual and visibleRowCount ==12 then
+            visibleRowCount = "="
         end
 
-        zebug.trace:print("adding self to rowList", self.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display",display, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
+        zebug.trace:print("adding self to rowList", self.emote.name, "at index n",n, "howManyQuickKeys",howManyQuickKeys, "bump",bump, "display", visibleRowCount, "DB.opts.quickKeyEqual",DB.opts.quickKeyEqual)
 
-        self.audioBtn.text:SetText(display)
+        self.audioBtn.text:SetText(visibleRowCount)
     else
         self.audioBtn.text:SetText(nil)
     end
