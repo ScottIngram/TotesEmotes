@@ -219,7 +219,7 @@ end
 
 function TheMenu:savePositionToDb()
     local point, relativeTo, relativePoint, xOffset, yOffset = self:GetPoint()
-    zebug.error:print("point", point, "relativeTo", relativePoint, "relativePoint", relativeTo, "xOffset", xOffset, "yOffset", yOffset)
+    zebug.trace:print("point", point, "relativeTo", relativePoint, "relativePoint", relativeTo, "xOffset", xOffset, "yOffset", yOffset)
     DB.theMenuPos.point = point or "TOPLEFT"
     DB.theMenuPos.relativeToFrameName = relativeTo and relativeTo.GetName and relativeTo:GetName() or "UIParent"
     DB.theMenuPos.relativePoint = relativePoint or "TOPLEFT"
@@ -229,17 +229,17 @@ end
 
 function TheMenu:restoreSizeFromDb()
     local g = DB.theMenuSize
-    zebug.error:dumpy("theMenuSize",g)
+    zebug.trace:dumpy("theMenuSize",g)
     if g and g.width and g.height then
         self:SetSize(g.width, g.height)
         --self:SetHeight(g.height)
-        zebug.warn:print("width", g.width, "height", g.height)
+        zebug.trace:print("width", g.width, "height", g.height)
     end
 end
 
 function TheMenu:saveSizeToDb()
     local width, height = self:GetSize()
-    zebug.error:print("name",self:GetName(), "width", width, "height", height)
+    zebug.trace:print("name",self:GetName(), "width", width, "height", height)
 
     DB.theMenuSize.width = width
     DB.theMenuSize.height = height
@@ -256,12 +256,11 @@ function GLOBAL_TOTES_TheMenu_onSearchTextChanged(searchBox)
 
     local newText = searchBox:GetText()
     local strippedText = newText
-    strippedText = string.gsub(strippedText, "^%s+", "")
+    strippedText = string.gsub(strippedText, "^%s+", "") -- less important now that I've added alphabeticOnly to the xml
     strippedText = string.gsub(strippedText, "%s+$", "")
     local hasNoBlankSpaceOnEnds = newText == strippedText
-    zebug.error:print("name", searchBox:GetName(), "search text", "["..newText.."]", "previousSearchString", "["..(previousSearchString or "").."]")
+    zebug.info:print("name", searchBox:GetName(), "search text", "["..newText.."]", "previousSearchString", "["..(previousSearchString or "").."]")
     if previousSearchString ~= strippedText then
-        zebug.error:print("running search")
         TheMenu.nav:runSearchFor(strippedText)
         previousSearchString = strippedText
     end
@@ -274,14 +273,14 @@ function TheMenu:updateSearchString(msg)
     local newText = msg or ""
     local oldText = searchBox:GetText() or ""
     if oldText == newText then
-        zebug.warn:print("no change = aborting!")
+        zebug.trace:print("no change = aborting!")
         return
     end
 
     searchBox:SetText(newText)
     SearchBoxTemplate_OnTextChanged(searchBox)
 
-    zebug.error:print("name TM",self:GetName(), "msg", newText, "search text",searchBox:GetText())
+    zebug.trace:print("name TM",self:GetName(), "msg", newText, "search text",searchBox:GetText())
 end
 
 -------------------------------------------------------------------------------
@@ -295,7 +294,7 @@ end
 
 function TheMenuResizerBtnController:OnMouseUp()
     local p = self:GetParent()
-    zebug.warn:name("init"):print("index of last row",p.scrollBox:GetDataIndexEnd())
+    zebug.info:name("init"):print("index of last row",p.scrollBox:GetDataIndexEnd())
     p:StopMovingOrSizing("BOTTOMRIGHT")
     p:saveSizeToDb()
     p:savePositionToDb() -- because Bliz's GetPoint() API is spastic and arbitarily changes its coordinate system if the size changes among other things
@@ -447,7 +446,7 @@ end
 
 function TheMenu:selectRowByVisibleIndex(visibleIndex)
     local visibleRowCount = self:getVisibleRowCount()
-    zebug.error:print("selecting by visibleIndex", visibleIndex)
+    zebug.info:print("selecting by visibleIndex", visibleIndex)
     if visibleIndex >= 1 and visibleIndex <= visibleRowCount then
         local row = self.visibleRowList[visibleIndex]
         self:selectRow(row)
@@ -456,21 +455,21 @@ function TheMenu:selectRowByVisibleIndex(visibleIndex)
         if visibleIndex < 1 then
             if currentPhysicalIndex == 1 then
                 -- don't scroll before the start of the list
-                zebug.error:print("already at START of list - aborting UP scroll")
+                zebug.info:print("already at START of list - aborting UP scroll")
                 return
             end
 
             self:scrollUp()
-            zebug.warn:print("scrolled UP.  selected row's new index",self.selectedRow.visibleIndex)
+            zebug.info:print("scrolled UP.  selected row's new index",self.selectedRow.visibleIndex)
             self:selectPreviousRow()
         elseif visibleIndex > visibleRowCount then
             if currentPhysicalIndex == self:getPhysicalRowCount() then
                 -- don't scroll past the end of the list
-                zebug.error:print("already at END of list - aborting DOWN scroll")
+                zebug.info:print("already at END of list - aborting DOWN scroll")
                 return
             end
             self:scrollDown()
-            zebug.warn:print("scrolled DOWN.  selected row's new index",self.selectedRow.visibleIndex)
+            zebug.info:print("scrolled DOWN.  selected row's new index",self.selectedRow.visibleIndex)
             self:selectNextRow()
         else
         end
@@ -484,9 +483,9 @@ function TheMenu:selectRow(row)
     end
     if row then
         row.SelectedOverlay:Show()
-        zebug.error:print("selecting row",row.name, "index", row.visibleIndex)
+        zebug.trace:print("selecting row",row.name, "index", row.visibleIndex)
     else
-        zebug.warn:print("clearing row selection")
+        zebug.trace:print("clearing row selection")
     end
     self.selectedRow = row
 end
@@ -496,7 +495,7 @@ function TheMenu:selectRowByNavNode(navNode)
     if not navNode then return end
 
     local foundRow
-    zebug.warn:print("looking for NavNode", navNode.domainData.name)
+    zebug.trace:print("looking for NavNode", navNode.domainData.name)
 
     ---@param row MenuRowButton
     self.scrollBox:ForEachFrame(function(row)
@@ -506,10 +505,10 @@ function TheMenu:selectRowByNavNode(navNode)
     end)
 
     if foundRow then
-        zebug.error:print("selecting row",foundRow.name, "index", foundRow.visibleIndex)
+        zebug.trace:print("selecting row",foundRow.name, "index", foundRow.visibleIndex)
         self:selectRow(foundRow)
     else
-        zebug.warn:print("no row found for NavNode", navNode.domainData.name)
+        zebug.trace:print("no row found for NavNode", navNode.domainData.name)
     end
 end
 
@@ -519,19 +518,14 @@ end
 -------------------------------------------------------------------------------
 
 function TheMenu:scrollDown()
-    zebug.error:print("down")
     self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Increase)
     play(SND.SCROLL_DOWN)
-    self:printRows()
 end
 
 function TheMenu:scrollUp()
-    zebug.error:print("up")
     self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Decrease)
     play(SND.SCROLL_UP)
-    self:printRows()
 end
-
 
 -------------------------------------------------------------------------------
 -- For the MenuRowButton
@@ -555,9 +549,8 @@ end
 -------------------------------------------------------------------------------
 
 function MenuRowButton:onLoad()
-    zebug.error:name("init"):print("initializing... grandparent", self:getScrollBox():GetName(), "GetDataIndexEnd",self:getScrollBox():GetDataIndexEnd())
+    zebug.info:name("init"):print("initializing... grandparent", self:getScrollBox():GetName(), "GetDataIndexEnd",self:getScrollBox():GetDataIndexEnd())
     self.isInit = true
-    --self:SetParentKey("btn".. self:GetOrderIndex())
 end
 
 function MenuRowButton:getMenu()
@@ -578,10 +571,6 @@ function MenuRowButton:getFrameIndex()
     local indexOfFirstVisibleRow = self:getScrollBox():GetDataIndexBegin() -- Also GetDataIndexEnd()
     return n - indexOfFirstVisibleRow + 1
 end
-
-function MenuRowButton:isFirstVisibleRow()
-end
-
 
 ---@param navNode NavNode
 function MenuRowButton:formatRow(navNode)

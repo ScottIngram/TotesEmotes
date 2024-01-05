@@ -317,7 +317,6 @@ function Navigator:inputNumber(num)
     if pickedKid then
         pickedKid.id = num -- tell TheMenu what number-key was pressed
         local resultingEvent = self:pickNode(pickedKid)
-        zebug.error:print("resultingEvent",resultingEvent)
         if resultingEvent == NavEvent.Execute then
             if IsModifierKeyDown() then
                 self:triggerExit()
