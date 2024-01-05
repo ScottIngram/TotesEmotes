@@ -422,6 +422,10 @@ end
 -- Row highlighting and selection
 -------------------------------------------------------------------------------
 
+function TheMenu:getSelectedRowIndex()
+    return self.selectedRow and self.selectedRow.visibleIndex
+end
+
 function TheMenu:selectNextRow()
     self:selectAdjacentRow(1)
 end

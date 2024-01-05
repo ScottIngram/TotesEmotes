@@ -126,9 +126,10 @@ function Navigator:pop()
     return foo
 end
 
+---@return NavEvent whatever was triggered as a result
 function Navigator:goCurrentNode(msg)
     local node = self:getCurrentNode()
-    self:goNode(msg, node)
+    return self:goNode(msg, node)
 end
 
 function Navigator:goSearchResults(matches)
@@ -142,12 +143,14 @@ function Navigator:goSearchResults(matches)
     self:goCurrentNode("search results")
 end
 
+---@return NavEvent whatever was triggered as a result
 function Navigator:goNode(msg, node)
     -- tell each kid what its index is... useful when filters are dynamically changing the contents
     for i, kidNode in ipairs(node.kids) do
         kidNode.id = i
     end
-    self:notifySubs(NavEvent.OpenNode, (msg or "goCurrentNode") .. " level="..((node and node.level)or"nil"), node)
+    msg = (msg or "goCurrentNode") .. " level="..((node and node.level)or"nil")
+    return self:notifySubs(NavEvent.OpenNode, msg, node)
 end
 
 ---@return NavNode
@@ -225,16 +228,7 @@ function Navigator:handleKeyPress(key)
         play(SND.DELETE)
         word = self:popLetter()
     elseif key == "ENTER" then
-        -- treat enter the same as pressing the "1" key
-        local result = self:inputNumber(1)
-        if result == KeyListenerResult.consumed then
-            -- pressing shift-enter will exit the window
-            if IsModifierKeyDown() then
-                self:exit()
-            end
-        end
-        play(SND.ENTER)
-        return result
+        return self:pressEnter()
     else
         -- exit when any unrecognized key is pressed
         return KeyListenerResult.passedOn
@@ -322,21 +316,36 @@ function Navigator:inputNumber(num)
     local pickedKid = selectedNode.kids[num + offset]
     if pickedKid then
         pickedKid.id = num -- tell TheMenu what number-key was pressed
-        self:pickNode(pickedKid)
+        local resultingEvent = self:pickNode(pickedKid)
+        zebug.error:print("resultingEvent",resultingEvent)
+        if resultingEvent == NavEvent.Execute then
+            if IsModifierKeyDown() then
+                self:triggerExit()
+            end
+        end
         return KeyListenerResult.consumed
     end
     return KeyListenerResult.passedOn
 end
 
+function Navigator:pressEnter()
+    -- this is a shameful hack: tightly coupled with TheMenu class.  TODO: better
+    local selected = TheMenu:getSelectedRowIndex() or 1
+    local result = self:inputNumber(selected)
+    play(SND.ENTER)
+    return result
+end
+
 ---@param navNode NavNode
+---@return NavEvent whatever was triggered as a result
 function Navigator:pickNode(navNode)
     if navNode.kids then
         play(SND.NAV_INTO)
         self:push(navNode)
-        self:goCurrentNode("pick node id "..navNode.id)
+        return self:goCurrentNode("pick node id "..navNode.id)
     else
         play(SND.KEYPRESS)
-        self:notifySubs(NavEvent.Execute, "childless node "..navNode.id, navNode)
+        return self:notifySubs(NavEvent.Execute, "childless node "..navNode.id, navNode)
     end
 end
 
@@ -395,7 +404,7 @@ function Navigator:createSearchIndex(navNode)
     return searchIndex
 end
 
-function Navigator:exit()
+function Navigator:triggerExit()
     self:nukeSearchString()
     self:replaceMenu(self.rootNode)
     self:goCurrentNode("Exit")
@@ -443,21 +452,18 @@ end
 
 ---@param event NavEvent
 ---@param msg string
----@return boolean any subscribers handled the event
+---@return NavEvent whatever was triggered as a result
 function Navigator:notifySubs(event, msg, ...)
     local subs = self.subscribers[event]
     if not subs then
         zebug.trace:print("WARNING: nobody's listening for", event.name)
-        return false
+        return nil
     end
 
-    local handled = false
     for callback, who in pairs(subs) do
         zebug.trace:print("broadcasting event",event.name, "to subscriber",who, "invoking",callback, "with msg",msg, "arg1",... )
-        local wasHandled = callback(msg, ...)
-        if wasHandled then handled = true end
+        callback(msg, ...)
     end
 
-    return true
-
+    return event
 end
