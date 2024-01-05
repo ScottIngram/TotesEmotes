@@ -37,8 +37,8 @@ RIGHT_CLICK_TO_OPEN_CONFIG = "Right-click this icon to open the config screen."
 RIGHT_CLICK_BUTTON_TO_OPEN_CONFIG = "Right-click the Emotes button or the Header Icon to open this config screen."
 
 TIP_LIST = {
-    "Escape or left arrow will go up a menu level.",
-    "Up and down arrow scroll the list.",
-    "Enter activates the first emote.",
-    "Shift-Enter ditto AND also closes the menu.",
+    "Escape or delete will go up a menu level.",
+    "Up and down arrow keys change the selection.",
+    "The Enter key will activate the selection.",
+    "Holding shift, etc. at the same time will close the menu.",
 }
