@@ -157,6 +157,19 @@ function TheMenu:setIcon(icon)
     self.icon.portrait:SetTexture(icon)
 end
 
+function TheMenu:setHeaderText(label)
+    self.header.label:SetText(label)
+    if label then
+        self.header.backButton:Show()
+    else
+        self.header.backButton:Hide()
+    end
+end
+
+function TheMenu:onBackButtonIsPressed()
+    theNavigator:goUp()
+end
+
 -------------------------------------------------------------------------------
 -- KeyListener Event handlers
 -------------------------------------------------------------------------------
@@ -287,12 +300,12 @@ end
 -- Resizer Button
 -------------------------------------------------------------------------------
 
-function TheMenuResizerBtnController:OnMouseDown()
+function TheMenuResizerBtnController:onMouseDown()
     -- tell the UI that the lower right corner should follow the mouse pointer
     self:GetParent():StartSizing("BOTTOMRIGHT")
 end
 
-function TheMenuResizerBtnController:OnMouseUp()
+function TheMenuResizerBtnController:onMouseUp()
     local p = self:GetParent()
     zebug.info:name("init"):print("index of last row",p.scrollBox:GetDataIndexEnd())
     p:StopMovingOrSizing("BOTTOMRIGHT")
@@ -330,7 +343,7 @@ function TheMenu:handleNavOpenNode(msg, navNode)
     zebug.info:name("handleOpenNode"):print("msg",msg, "node level", navNode.level, "id", id, "#kids", navNode.kids and #navNode.kids, "isEmote",isEmote)
     local icon = emoteDef and emoteDef.icon or ICON_TOP_MENU
     local label = --[[navNode.name or]] EmoteCatName[id] -- no longer display the search string in place of the cat name
-    self.header.fontString:SetText(label)
+    self:setHeaderText(label)
     self:setIcon(icon)
     local oldNavNode = self.selectedRow and self.selectedRow.navNode
     self:selectRow(nil)

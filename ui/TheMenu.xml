@@ -27,9 +27,23 @@
                     <Anchor point="TOPLEFT" x="60" y="-30"/>
                     <Anchor point="TOPRIGHT" x="-25" y="-30"/>
                 </Anchors>
+                <Frames>
+                    <Button parentKey="backButton" hidden="true" mixin="TotesTheMenuController">
+                        <Size x="15" y="15"/>
+                        <Anchors>
+                            <Anchor point="LEFT" x="10" y="-2"/>
+                        </Anchors>
+                        <NormalTexture file="Interface/ChatFrame/UI-ChatIM-SizeGrabber-Down" rotation="225"/>
+                        <PushedTexture file="Interface/ChatFrame/UI-ChatIM-SizeGrabber-Up" rotation="225"/>
+                        <HighlightTexture file="Interface/ChatFrame/UI-ChatIM-SizeGrabber-Highlight" rotation="225"/>
+                        <Scripts>
+                            <OnMouseUp method="onBackButtonIsPressed"/>
+                        </Scripts>
+                    </Button>
+                </Frames>
                 <Layers>
                     <Layer level="OVERLAY">
-                        <FontString inherits="GameFontNormal" parentKey="fontString" wordwrap="false">
+                        <FontString inherits="GameFontNormal" parentKey="label" wordwrap="false">
                             <Color r="1" g="1" b="1" a="1"/>
                             <Anchors>
                                 <Anchor point="TOP" x="0" y="-5"/>
@@ -90,8 +104,8 @@
                 <PushedTexture file="Interface/ChatFrame/UI-ChatIM-SizeGrabber-Up"/>
                 <HighlightTexture file="Interface/ChatFrame/UI-ChatIM-SizeGrabber-Highlight"/>
                 <Scripts>
-                    <OnMouseDown method="OnMouseDown"/>
-                    <OnMouseUp method="OnMouseUp"/>
+                    <OnMouseDown method="onMouseDown"/>
+                    <OnMouseUp method="onMouseUp"/>
                 </Scripts>
             </Button>
         </Frames>
