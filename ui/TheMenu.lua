@@ -333,6 +333,7 @@ function TheMenu:handleNavOpenNode(msg, navNode)
     local label = --[[navNode.name or]] EmoteCatName[id] -- no longer display the search string in place of the cat name
     self.header.fontString:SetText(label)
     self:setIcon(icon)
+    local oldNavNode = self.selectedRow and self.selectedRow.navNode
     self:selectRow(nil)
     self:clearRowList()
 
@@ -344,6 +345,8 @@ function TheMenu:handleNavOpenNode(msg, navNode)
     end
 
     self:setListing(navNode.kids)
+
+    self:selectRowByNavNode(oldNavNode)
 end
 
 ---@param navNode NavNode
@@ -472,7 +475,6 @@ function TheMenu:selectRowByVisibleIndex(visibleIndex)
         else
         end
     end
-
 end
 
 ---@param row MenuRowButton
@@ -484,9 +486,31 @@ function TheMenu:selectRow(row)
         row.SelectedOverlay:Show()
         zebug.error:print("selecting row",row.name, "index", row.visibleIndex)
     else
-        zebug.warn:print("can't select a NIL row")
+        zebug.warn:print("clearing row selection")
     end
     self.selectedRow = row
+end
+
+---@param row NavNode
+function TheMenu:selectRowByNavNode(navNode)
+    if not navNode then return end
+
+    local foundRow
+    zebug.warn:print("looking for NavNode", navNode.domainData.name)
+
+    ---@param row MenuRowButton
+    self.scrollBox:ForEachFrame(function(row)
+        if row.navNode == navNode then
+            foundRow = row
+        end
+    end)
+
+    if foundRow then
+        zebug.error:print("selecting row",foundRow.name, "index", foundRow.visibleIndex)
+        self:selectRow(foundRow)
+    else
+        zebug.warn:print("no row found for NavNode", navNode.domainData.name)
+    end
 end
 
 -------------------------------------------------------------------------------
