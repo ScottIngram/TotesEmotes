@@ -496,6 +496,7 @@ function TheMenu:selectRow(row)
     end
     if row then
         row.SelectedOverlay:Show()
+        play(SND.SCROLL_UP)
         zebug.trace:print("selecting row",row.name, "index", row.visibleIndex)
     else
         zebug.trace:print("clearing row selection")
