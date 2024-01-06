@@ -48,6 +48,10 @@ local function initializeOptionsMenu()
 
     local opts = DB.opts
 
+    local isKeyboardDisabled = function()
+        return not opts.isKeyboardEnabled
+    end
+
     optionsMenu = {
         name = Totes.myTitle,
         type = "group",
@@ -68,6 +72,38 @@ Tips:
             },
 
             -------------------------------------------------------------------------------
+            -- Enable Keyboard
+            -------------------------------------------------------------------------------
+
+            keyboardHeader = {
+                order = 500,
+                name = "Keyboard Controls",
+                type = 'header',
+            },
+            keyboardHelp = {
+                order = 510,
+                type = 'description',
+                name = "TotesEmotes can be controlled with both the mouse and keyboard.  However, you can disable the keyboard if you don't want the menu to intercept keystrokes.",
+            },
+            keyboardEnabled = {
+                order = 520,
+                name = "Enable Keyboard",
+                desc = "Don't intercept any keystrokes.  Control emotes using only the mouse.",
+                type = "toggle",
+                set = function(optionsMenu, val)
+                    opts.isKeyboardEnabled = val
+                    if val then
+                        TheMenu:enableKeyboard(true)
+                    else
+                        TheMenu:enableKeyboard(false)
+                    end
+                end,
+                get = function()
+                    return opts.isKeyboardEnabled
+                end,
+            },
+
+            -------------------------------------------------------------------------------
             -- shortcut numbering
             -------------------------------------------------------------------------------
 
@@ -75,11 +111,13 @@ Tips:
                 order = 1000,
                 name = "Shortcut Quick Keys",
                 type = 'header',
+                hidden = isKeyboardDisabled,
             },
             quickHelp = {
                 order = 1010,
                 type = 'description',
                 name = "The first several emotes in the menu can be triggered via a key-press.  By default, these are: 1, 2, 3, ... 9, and 0",
+                hidden = isKeyboardDisabled,
             },
             quickKeyBacktick = {
                 order = 1100,
@@ -94,6 +132,7 @@ Tips:
                 get = function()
                     return opts.quickKeyBacktick
                 end,
+                hidden = isKeyboardDisabled,
             },
             quickKeyDash = {
                 order = 1200,
@@ -108,6 +147,7 @@ Tips:
                 get = function()
                     return opts.quickKeyDash
                 end,
+                hidden = isKeyboardDisabled,
             },
             quickKeyEqual = {
                 order = 1300,
@@ -122,6 +162,7 @@ Tips:
                 get = function()
                     return opts.quickKeyEqual
                 end,
+                hidden = isKeyboardDisabled,
             },
 
             -------------------------------------------------------------------------------
@@ -132,11 +173,13 @@ Tips:
                 order = 2000,
                 name = "Autocomplete",
                 type = 'header',
+                hidden = isKeyboardDisabled,
             },
             everythingHelp = {
                 order = 2010,
                 type = 'description',
                 name = "While the menu is open, typing in a word will trigger a search for matching emotes.",
+                hidden = isKeyboardDisabled,
             },
 
             -------------------------------------------------------------------------------

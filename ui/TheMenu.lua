@@ -90,7 +90,9 @@ function TheMenu:new()
     self:restorePositionFromDb()
 
     -- Behavior
-    self:startKeyListener(KeyListenerScope.alwaysWhileVisible)
+    if DB.opts.isKeyboardEnabled then
+        self:startKeyListener(KeyListenerScope.alwaysWhileVisible)
+    end
     --self.searchBox:Disable() -- prevents user input effectively making it a display-only UI
 
     self:makeScrollArea()
@@ -182,6 +184,19 @@ end
 ---@return boolean true if consumed: stop propagation!
 function TheMenu:handleKeyRelease(key)
     return self.nav:handleKeyReleaseEvent(key)
+end
+
+function TheMenu:enableKeyboard(on)
+    if on then
+        TheMenu:startKeyListener()
+    else
+        TheMenu:stopKeyListener()
+    end
+
+    ---@param row MenuRowButton
+    self.scrollBox:ForEachFrame(function(row)
+        row:updateHotKey()
+    end)
 end
 
 -------------------------------------------------------------------------------
@@ -634,7 +649,9 @@ function MenuRowButton:updateHotKey()
     TheMenu.visibleRowList[visibleIndex] = self
     self.visibleIndex = visibleIndex
 
-    if visibleIndex <= howManyQuickKeys then
+    -- TODO: refactor so that visibleRowList is populated elsewhere and we don't have to invoke updateHotKey()
+
+    if visibleIndex <= howManyQuickKeys and DB.opts.isKeyboardEnabled then
         ---@type string
 
         if visibleIndex == 10 then

@@ -45,6 +45,11 @@ function KeyListenerMixin:startKeyListener(onlyWhenMouseOver)
     self:SetScript(KeyEvent.UP,   makeHandlerForEvent(self.handleKeyRelease))
 end
 
+function KeyListenerMixin:stopKeyListener()
+    self:EnableKeyboard(false)
+    self:SetPropagateKeyboardInput(false)
+end
+
 function makeHandlerForEvent(handler)
     local func = function(self, key)
         local doConsumeKeyPress = (not self.onlyWhenMouseOver) or self:IsMouseOver()

@@ -31,6 +31,7 @@ Totes.DB = DB
 ---@field quickKeyBacktick boolean start menu at ~
 ---@field quickKeyDash boolean the menu will include - on the end
 ---@field quickKeyEqual boolean the menu will include = on the end
+---@field isKeyboardEnabled boolean intercept keystrokes
 ---@field faves table<string,boolean> which emotes are favorites { emoteName = t/f }
 Options = { }
 
@@ -57,7 +58,8 @@ function DB:getOptionDefaults()
         quickKeyBacktick  = false,
         quickKeyDash = true,
         quickKeyEqual = false,
-        faves = {}
+        faves = {},
+        isKeyboardEnabled = true,
     }
     return defaults
 end

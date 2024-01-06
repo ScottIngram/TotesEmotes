@@ -52,7 +52,9 @@ function TheButton:new()
 
     self:restorePositionFromDb()
     self:restoreVisibility()
-    self:startKeyListener(KeyListenerScope.onlyDuringMouseOver)
+    if DB.opts.isKeyboardEnabled then
+        self:startKeyListener(KeyListenerScope.onlyDuringMouseOver)
+    end
 
     return self
 end
