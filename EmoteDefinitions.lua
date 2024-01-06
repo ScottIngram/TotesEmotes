@@ -126,7 +126,7 @@ EmoteDefinitions.list = {
     { name="drink",        cat=EmoteCat.Happy,   viz=true, audio=true, alts={"shindig"}, },
     { name="drool",        cat=EmoteCat.Sad,     },
     { name="duck",         cat=EmoteCat.Sad,     },
-    { name="eat",          cat=EmoteCat.Sad,     viz=true, audio=true, alts={"chew", "feast"}, },
+    { name="eat",          cat=EmoteCat.Neutral, viz=true, audio=true, alts={"chew", "feast"}, },
     { name="embarrass",    cat=EmoteCat.Sad,     },
     { name="encourage",    cat=EmoteCat.Happy,   },
     { name="enemy",        cat=EmoteCat.Angry,   },
