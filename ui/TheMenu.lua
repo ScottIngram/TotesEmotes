@@ -176,7 +176,12 @@ end
 
 ---@return boolean true if consumed: stop propagation!
 function TheMenu:handleKeyPress(key)
-    return self.nav:handleKeyPress(key)
+    return self.nav:handleKeyPressEvent(key)
+end
+
+---@return boolean true if consumed: stop propagation!
+function TheMenu:handleKeyRelease(key)
+    return self.nav:handleKeyReleaseEvent(key)
 end
 
 -------------------------------------------------------------------------------
@@ -532,12 +537,12 @@ end
 -------------------------------------------------------------------------------
 
 function TheMenu:scrollDown()
-    self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Increase)
+    self.listDiv.scrollBar:ScrollPageInDirection(ScrollControllerMixin.Directions.Increase)
     play(SND.SCROLL_DOWN)
 end
 
 function TheMenu:scrollUp()
-    self.listDiv.scrollBar:ScrollStepInDirection(ScrollControllerMixin.Directions.Decrease)
+    self.listDiv.scrollBar:ScrollPageInDirection(ScrollControllerMixin.Directions.Decrease)
     play(SND.SCROLL_UP)
 end
 

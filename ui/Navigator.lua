@@ -60,9 +60,12 @@ local exampleSearchIndex = {
 ---@field rootNode NavNode a hierarchical, nested set of tables representing a menu of emotes
 ---@field stack table<number,NavNode> -- array of traversed NavNodes
 ---@field subscribers table<string,table<function,boolean|string> : <event,list<callback,name>> collection of fuctions to be invoked in case of events
+---@field isKeyDown table<string,boolean> is the specified key currently being pressed?
+---@field keyLoopThreadId table<string,boolean> is the specified key currently already got a repeater?
 Navigator = {
     stack = {},
     subscribers = {},
+    isKeyDown = {},
 }
 
 -------------------------------------------------------------------------------
@@ -171,30 +174,75 @@ function Navigator:convertSearchResultsIntoNode(matches, originalNode)
     return result
 end
 
+-------------------------------------------------------------------------------
+-- Keyboard event handlers and "threaded" key repeating
+-------------------------------------------------------------------------------
+
+local initialKeyRepeatDelay = 0.8
+local keyRepeatDelay = 0.2
+local nextKeyRepeatDelay = initialKeyRepeatDelay
+
+function Navigator:keyRepeat(key)
+    if not self.keyLoopThreadId then
+        -- self.keyLoopThreadId gets erased on key release,
+        -- and thus, shuts down the loop triggered by the original event.
+        -- thereby preventing rapid keypresses from all maintaining multiple concurrent loop threads
+        self.keyLoopThreadId = math.random(1,999999)
+    end
+    self:keyRepeatLoop(key, self.keyLoopThreadId)
+end
+
+function Navigator:keyRepeatLoop(key, threadId)
+    C_Timer.After(nextKeyRepeatDelay, function()
+
+        -- only continue looping while the key is down
+        if not self.isKeyDown[key] then
+            zebug.info:print("aborted key repeat because the user released my key", key)
+            return
+        end
+
+        -- only continue looping while the contrived "thread" is alive
+        if self.keyLoopThreadId ~= threadId then
+            zebug.info:print("aborted key repeat because my thread is dead... my threadId ", threadId, "not equal active threadId",self.keyLoopThreadId)
+            return
+        end
+
+        nextKeyRepeatDelay = keyRepeatDelay
+        self:triggerActionForKey(key)
+    end)
+end
+
+function Navigator:handleKeyReleaseEvent(key)
+    zebug.info:print("released key", key)
+    self.isKeyDown[key] = false
+    self.keyLoopThreadId = nil
+    return KeyListenerResult.consumed
+end
+
 ---@return boolean true if consumed: stop propagation!
-function Navigator:handleKeyPress(key)
+function Navigator:handleKeyPressEvent(key)
     -- assume Bliz consistently provides key in all upper case... ROFLMAO!!!
     -- Is Bliz EVER consistent about ANYTHING?!?!   OMG, good one!!!  Tears!  Tears streaming from my eyes!
     key = string.upper(key)
+    self.isKeyDown[key] = true
+    nextKeyRepeatDelay = initialKeyRepeatDelay
+    return self:triggerActionForKey(key)
+end
 
-    -- the escape key closes the window
-    --if key == "ESCAPE" then
-    --    self:exit()
-    --    return KeyListenerResult.consumed
-    --end
-
-    if
-    key == "ESCAPE" or
-    ((key == "DELETE" or key == "BACKSPACE") and not self.searchString) then
+function Navigator:triggerActionForKey(key)
+    if key == "ESCAPE"
+    or ((key == "DELETE" or key == "BACKSPACE") and not self.searchString) then
         self:goUp()
         return KeyListenerResult.consumed
     end
 
     if key == "DOWN" then
         self:notifySubs(NavEvent.DownKey, "Down Key")
+        self:keyRepeat(key)
         return KeyListenerResult.consumed
     elseif key == "UP" then
         self:notifySubs(NavEvent.UpKey, "Up Key")
+        self:keyRepeat(key)
         return KeyListenerResult.consumed
     end
 
@@ -227,6 +275,12 @@ function Navigator:handleKeyPress(key)
     elseif key == "DELETE" or key == "BACKSPACE" then
         play(SND.DELETE)
         word = self:popLetter()
+        if word then
+            -- don't repeat the keystroke if the word is empty because
+            -- Bliz's search box widget evidently consumes the keyup event when it's emptied
+            -- thus preventing self:handleKeyPressEvent() from nuking the repeater thread :-(
+            self:keyRepeat(key)
+        end
     elseif key == "ENTER" then
         return self:pressEnter()
     else
@@ -239,7 +293,9 @@ function Navigator:handleKeyPress(key)
 end
 
 function Navigator:runSearchFor(word)
-    self.searchString = word
+    -- convert "" into nil because most methods in this class only check for nil and not ""
+    -- but Bliz's search box widget returns ""
+    self.searchString = exists(word) and word
 
     if exists(word) then
         local matches = self:search(word)
@@ -253,7 +309,6 @@ function Navigator:runSearchFor(word)
         end
         return KeyListenerResult.passedOn
     end
-
 end
 
 
