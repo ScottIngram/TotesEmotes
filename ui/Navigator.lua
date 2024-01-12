@@ -230,8 +230,12 @@ function Navigator:handleKeyPressEvent(key)
 end
 
 function Navigator:triggerActionForKey(key)
-    if key == "ESCAPE"
-    or ((key == "DELETE" or key == "BACKSPACE") and not self.searchString) then
+    if key == "ESCAPE" then
+        self:triggerExit()
+        return KeyListenerResult.consumed
+    end
+
+    if (key == "DELETE" or key == "BACKSPACE") and not self.searchString then
         self:goUp()
         return KeyListenerResult.consumed
     end
@@ -273,8 +277,13 @@ function Navigator:triggerActionForKey(key)
         play(SND.KEYPRESS)
         word = self:pushLetter(key)
     elseif key == "DELETE" or key == "BACKSPACE" then
+        if IsModifierKeyDown() then
+            self:nukeSearchString()
+            word = nil
+        else
+            word = self:popLetter()
+        end
         play(SND.DELETE)
-        word = self:popLetter()
         if word then
             -- don't repeat the keystroke if the word is empty because
             -- Bliz's search box widget evidently consumes the keyup event when it's emptied
@@ -432,13 +441,13 @@ function Navigator:createSearchIndex(navNode)
     ---@param kidNode NavNode
     for kidN, kidNode in ipairs(navNode.kids) do
         local alreadyIndexedFor = {}
-        local name = kidNode.domainData.name
-        zebug.trace:line(10, "kidN",kidN, "name",name)
-        local len = string.len(name)
+        local localizedName = localizeEmote(kidNode.domainData.name)
+        zebug.trace:line(10, "kidN",kidN, "name", localizedName)
+        local len = string.len(localizedName)
         for i = 1, len do
             -- take "clap" and chop it into c,cl,cla,clap... then l,la,lap... then a,ap... then p.
             for j = i, len do
-                local subStr = string.sub(name, i, j)
+                local subStr = string.sub(localizedName, i, j)
                 zebug.trace:print("subStr",subStr)
                 local subStrings = searchIndex[subStr]
                 if not subStrings then
@@ -463,6 +472,7 @@ function Navigator:triggerExit()
     self:replaceMenu(self.rootNode)
     self:goCurrentNode("Exit")
     self:notifySubs(NavEvent.Exit, "explicit exit")
+    self:nukeSearchString()
 end
 
 function Navigator:goUp()

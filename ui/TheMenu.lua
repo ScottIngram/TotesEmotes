@@ -616,13 +616,15 @@ function MenuRowButton:formatRow(navNode)
     local emote = self.emote
     if navNode.kids then
         -- this is a category
-        self.label:SetText(emote.name)
+        local localized = L10N[emote.name] or emote.name
+        self.label:SetText(localized)
         self.audioBtn.icon:SetTexture(nil) -- 450908:arrow_right
         self.vizBtn.icon:SetTexture(emote.icon)
         zebug.trace:line(20, "CAT", emote.name, "icon",emote.icon)
     else
         -- this is an emote
-        self.label:SetText(emote.name)
+        local localized = localizeEmote(emote.name)
+        self.label:SetText(localized)
         self.audioBtn.icon:SetTexture(emote.audio and ICON_AUDIO)
         self.vizBtn.icon:SetTexture(emote.viz and ICON_VIZ)
         self.faveBtn:updateDisplay()

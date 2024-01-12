@@ -165,9 +165,9 @@ local slashFuncs = {
         desc = L10N.SLASH_DESC_CONFIG,
         fnc = function() Settings.OpenToCategory(Totes.myTitle)  end,
     },
-    [L10N.SLASH_CMD_TOGGLE] = {
-        desc = L10N.SLASH_DESC_TOGGLE,
-        fnc = function() print("doing done did SLASH_CMD_OPEN")  end,
+    [L10N.SLASH_CMD_OPEN] = {
+        desc = L10N.SLASH_DESC_OPEN,
+        fnc = function() TheMenu:toggle()  end,
     },
 }
 
@@ -185,6 +185,7 @@ function initalizeAddonStuff()
     _G["BINDING_NAME_"..KEYBINDING_ID] = ADDON_NAME .. " - Toggle Menu"
 
     registerSlashCmd("totes", slashFuncs)
+    registerSlashCmd("totesemotes", slashFuncs)
 
     DB:initializeOptsMemory()
     DB:initializePositionMemory()

@@ -15,4 +15,7 @@
 	<Script file="zhCN.lua"/>
 	<Script file="zhTW.lua"/>
 	-->
+
+	<!-- put this last because it includes values from the above -->
+	<Script file="EmotesLocalized.lua"/>
 </Ui>
