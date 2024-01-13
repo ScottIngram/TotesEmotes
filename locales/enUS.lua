@@ -12,9 +12,6 @@ LOADED = "loaded"
 LEFT_CLICK = "Left-click"
 RIGHT_CLICK = "Right-click"
 MIDDLE_CLICK = "Middle-click"
-TOGGLE_TOTES = "toggle emotes button"
-OPEN_CONFIG = "open config"
-REPOSITION_TOTES = "reset button position"
 
 SLASH_CMD_HELP = "help"
 SLASH_CMD_CONFIG = "config"
@@ -25,8 +22,10 @@ SLASH_CMD_TOGGLE = "toggle"
 SLASH_DESC_TOGGLE = "toggle the Emote menu button."
 SLASH_UNKNOWN_COMMAND = "unknown command"
 
+TOGGLE_TOTES = "toggle emotes menu"
+OPEN_CONFIG = "open config"
+REPOSITION_TOTES = "reset button position"
 CLICK_TO_TOGGLE_FAVORITE = "Click to toggle favorite."
-
 RIGHT_CLICK_TO_OPEN_CONFIG = "Right-click this icon to open the config screen."
 RIGHT_CLICK_BUTTON_TO_OPEN_CONFIG = "Right-click the Emotes button or the Header Icon to open this config screen."
 
