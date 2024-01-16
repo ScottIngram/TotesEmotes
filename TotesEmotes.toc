@@ -1,7 +1,7 @@
-## Interface: 100107
+## Interface: 100205
 ## Title: TotesEmotes
 ## Author: Scott Ingram
-## Version: 10.1.7-beta1
+## Version: 10.2.5
 ## AddonCompartmentFunc: GLOBAL_TOTES_AddonCompartment_OnClick
 ## AddonCompartmentFuncOnEnter: GLOBAL_TOTES_AddonCompartment_OnEnter
 ## AddonCompartmentFuncOnLeave: GLOBAL_TOTES_AddonCompartment_OnLeave
