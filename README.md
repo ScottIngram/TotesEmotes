@@ -25,6 +25,7 @@ Search speedily for any emote!  While the menu is open, anything you type will a
 - Left-Click the red "Emotes" button this addon puts on your screen (can be turned off in the configuration screen)
 - Left-Click "TotesEmotes" in the Addon Compartment (the new menu Blizzard added in Dragonflight to the upper right corner of the minimap).
 - Type `/totes open`
+- Create a keybind in the Blizzard config screens
 
 **Q:** How do I access the Totes Emotes Configuration Screen?  
 **A:** Any of the following will display the config screen:
