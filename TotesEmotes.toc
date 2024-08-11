@@ -1,6 +1,6 @@
 ## Title: TotesEmotes
 ## Author: Scott Ingram
-## Version: 11.0.0
+## Version: 11.0.0-a
 ## Interface: 100207,110000,110002
 ## AddonCompartmentFunc: GLOBAL_TOTES_AddonCompartment_OnClick
 ## AddonCompartmentFuncOnEnter: GLOBAL_TOTES_AddonCompartment_OnEnter
@@ -12,10 +12,11 @@
 
 libs\libs.xml
 
-ScottFree\Wormhole.lua
-ScottFree\Zebug.lua
-ScottFree\BlizGlobalEventsListener.lua
-ScottFree\EventRegistry.lua
+ScottFreeWowLibs\Wormhole.lua
+ScottFreeWowLibs\Zebug.lua
+ScottFreeWowLibs\BlizApiEnums.lua
+ScottFreeWowLibs\BlizGlobalEventsListener.lua
+ScottFreeWowLibs\utilities.lua
 
 locales\index.xml
 
@@ -34,4 +35,4 @@ ui\Navigator.lua
 TotesEmotes.lua
 
 # for GLOBAL_TOTES_AddonCompartment_*
-ScottFree\ExportToGlobal.lua
+ScottFreeWowLibs\ExportToGlobal.lua
