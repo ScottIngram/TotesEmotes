@@ -41,8 +41,8 @@ function KeyListenerMixin:startKeyListener(onlyWhenMouseOver)
     self.onlyWhenMouseOver = onlyWhenMouseOver
     self:EnableKeyboard(true)
     self:SetPropagateKeyboardInput(true)
-    self:SetScript(KeyEvent.DOWN, makeHandlerForEvent(self.handleKeyPress))
-    self:SetScript(KeyEvent.UP,   makeHandlerForEvent(self.handleKeyRelease))
+    self:SetScript(KeyEvent.DOWN, makeKeyHandlerFrom(self.handleKeyPress))
+    self:SetScript(KeyEvent.UP,   makeKeyHandlerFrom(self.handleKeyRelease))
 end
 
 function KeyListenerMixin:stopKeyListener()
@@ -50,16 +50,16 @@ function KeyListenerMixin:stopKeyListener()
     self:SetPropagateKeyboardInput(false)
 end
 
-function makeHandlerForEvent(handler)
+function makeKeyHandlerFrom(handler)
     local func = function(self, key)
         local doConsumeKeyPress = (not self.onlyWhenMouseOver) or self:IsMouseOver()
         if doConsumeKeyPress then
             local handled = handler(self, key)
             local propagate = not handled
+            if isInCombatLockdown("key press heard") then return true end
             self:SetPropagateKeyboardInput(propagate)
         else
-            --zebug.trace:print("Ignoring ", key, "self:GetPropagateKeyboardInput", self:GetPropagateKeyboardInput())
-            -- TODO: fix taint failure triggered by SetPropagateKeyboardInput()
+            if isInCombatLockdown("key press heard") then return true end -- avoid taint failure
             self:SetPropagateKeyboardInput(true)
         end
         return true
