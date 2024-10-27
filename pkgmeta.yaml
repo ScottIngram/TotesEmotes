@@ -1,0 +1,4 @@
+package-as: UFO
+
+externals:
+  ScottFreeWowLibs: https://github.com/ScottIngram/ScottFreeWowLibs.git
