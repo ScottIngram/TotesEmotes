@@ -1,7 +1,8 @@
 ## Title: TotesEmotes
 ## Author: Scott Ingram
-## Version: 11.0.5
-## Interface: 110005
+## Version: 11.1.0
+## Interface: 111000
+## Category: Roleplay
 ## AddonCompartmentFunc: GLOBAL_TOTES_AddonCompartment_OnClick
 ## AddonCompartmentFuncOnEnter: GLOBAL_TOTES_AddonCompartment_OnEnter
 ## AddonCompartmentFuncOnLeave: GLOBAL_TOTES_AddonCompartment_OnLeave
