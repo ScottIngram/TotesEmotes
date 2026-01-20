@@ -1,3 +1,5 @@
+local ADDON_NAME, ADDON_VARS = ...
+
 --- AceConfigDialog-3.0 generates AceGUI-3.0 based windows based on option tables.
 -- @class file
 -- @name AceConfigDialog-3.0
@@ -7,7 +9,7 @@ local LibStub = LibStub
 local gui = LibStub("AceGUI-3.0")
 local reg = LibStub("AceConfigRegistry-3.0")
 
-local MAJOR, MINOR = "AceConfigDialog-3.0", 86
+local MAJOR, MINOR = "AceConfigDialog-3.0.TOTES", 86
 local AceConfigDialog, oldminor = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceConfigDialog then return end
@@ -2013,7 +2015,9 @@ function AceConfigDialog:AddToBlizOptions(appName, name, parent, ...)
 				local category = Settings.RegisterCanvasLayoutCategory(group.frame, categoryName)
 				-- using appName here would be cleaner, but would not be 100% compatible
 				-- but for top-level categories it should be fine, as these are typically addon names
-				category.ID = categoryName
+--print("*** ACE *** category.ID = ",category.ID)
+ADDON_VARS.configUiId = category.ID
+				--category.ID = categoryName
 				group:SetName(categoryName, parent)
 				Settings.RegisterAddOnCategory(category)
 			end

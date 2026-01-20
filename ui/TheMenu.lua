@@ -126,7 +126,7 @@ function iconOnClick(self, mouseClick, isDown)
     if mouseClick == MouseClick.LEFT then
         --theMenu:toggle()
     elseif mouseClick == MouseClick.RIGHT then
-        Settings.OpenToCategory(Totes.myTitle)
+        Config:open() -- Settings.OpenToCategory(Totes.myTitle)
     end
 end
 

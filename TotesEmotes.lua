@@ -56,7 +56,7 @@ function GLOBAL_TOTES_AddonCompartment_OnClick(addonName, mouseClick)
     elseif mouseClick == MouseClick.MIDDLE then
         TheButton:resetPositionToDefault()
     else
-        Settings.OpenToCategory(Totes.myTitle)
+        Config:open() -- Settings.OpenToCategory(Totes.myTitle)
     end
 end
 
@@ -163,7 +163,7 @@ end
 local slashFuncs = {
     [L10N.SLASH_CMD_CONFIG] = {
         desc = L10N.SLASH_DESC_CONFIG,
-        fnc = function() Settings.OpenToCategory(Totes.myTitle)  end,
+        fnc = Config.open,
     },
     [L10N.SLASH_CMD_OPEN] = {
         desc = L10N.SLASH_DESC_OPEN,

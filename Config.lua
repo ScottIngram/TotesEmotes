@@ -216,5 +216,10 @@ function Config:initializeOptionsMenu()
     --local db = LibStub("AceDB-3.0"):New(ADDON_NAME, defaults)
     --options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(db)
     LibStub("AceConfig-3.0"):RegisterOptionsTable(ADDON_NAME, optionsMenu)
-    LibStub("AceConfigDialog-3.0"):AddToBlizOptions(ADDON_NAME, Totes.myTitle)
+    LibStub("AceConfigDialog-3.0.TOTES"):AddToBlizOptions(ADDON_NAME, Totes.myTitle)
+end
+
+function Config:open()
+    --print("TOTES Totes.configUiId",Totes.configUiId)
+    Settings.OpenToCategory(Totes.configUiId, Totes.myTitle)
 end
