@@ -1,7 +1,7 @@
 ## Title: TotesEmotes
 ## Author: Scott Ingram
-## Version: 12.0.0.prepatch.1
-## Interface: 120000
+## Version: 12.1.0
+## Interface: 120100, 120005, 120001, 120000
 ## X-Category: Roleplay
 ## AddonCompartmentFunc: GLOBAL_TOTES_AddonCompartment_OnClick
 ## AddonCompartmentFuncOnEnter: GLOBAL_TOTES_AddonCompartment_OnEnter
