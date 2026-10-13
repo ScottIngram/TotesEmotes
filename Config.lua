@@ -215,11 +215,24 @@ function Config:initializeOptionsMenu()
     initializeOptionsMenu()
     --local db = LibStub("AceDB-3.0"):New(ADDON_NAME, defaults)
     --options.args.profile = LibStub("AceDBOptions-3.0"):GetOptionsTable(db)
+    Config.AceConfigDialog = LibStub("AceConfigDialog-3.0")
     LibStub("AceConfig-3.0"):RegisterOptionsTable(ADDON_NAME, optionsMenu)
-    LibStub("AceConfigDialog-3.0.TOTES"):AddToBlizOptions(ADDON_NAME, Totes.myTitle)
+    LibStub("AceConfigDialog-3.0"):AddToBlizOptions(ADDON_NAME, Totes.myTitle)
 end
 
+local v
+
 function Config:open()
-    --print("TOTES Totes.configUiId",Totes.configUiId)
-    Settings.OpenToCategory(Totes.configUiId, Totes.myTitle)
+    local myName = ADDON_NAME
+    local acd = Config.AceConfigDialog
+    local frames = acd.OpenFrames
+    if frames[myName] == nil then
+        acd:Open(myName)
+        if frames[myName] then
+            v = v or "v".. C_AddOns.GetAddOnMetadata(ADDON_NAME, "Version") or "0"
+            frames[myName]:SetStatusText(v)
+        end
+    else
+        acd:Close(myName)
+    end
 end
