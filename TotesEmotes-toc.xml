@@ -1,0 +1,29 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.blizzard.com/wow/ui/..\FrameXML\UI.xsd"
+>
+
+    # external 3rd-party libs
+    <Include file="libs\index.xml"/>
+
+    # libs common to my various projects
+    <Include file="ScottFreeWowLibs\index.xml"/>
+
+    # localization
+    <Include file="locales\index.xml"/>
+
+    <Script file="utilities.lua"/>
+    <Script file="constants.lua"/>
+    <Script file="DB.lua"/>
+    <Script file="Config.lua"/>
+    <Script file="EmoteDefinitions.lua"/>
+    <Script file="ui\KeyListenerMixin.lua"/>
+    <Script file="ui\TheButton.lua"/>
+    <Script file="ui\TheMenu.lua"/>
+    <Include file="ui\TheMenu.xml"/>
+    <Script file="ui\Navigator.lua"/>
+    <Script file="TotesEmotes.lua"/>
+
+    # for GLOBAL_TOTES_AddonCompartment_*
+    <Script file="ScottFreeWowLibs\ExportToGlobal.lua"/>
+</Ui>

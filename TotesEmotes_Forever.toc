@@ -1,0 +1,14 @@
+## Title: TotesEmotes
+## Author: Scott Ingram
+## Version: 1215.1
+## Interface: 16001
+## X-Category: Roleplay
+## AddonCompartmentFunc: GLOBAL_TOTES_AddonCompartment_OnClick
+## AddonCompartmentFuncOnEnter: GLOBAL_TOTES_AddonCompartment_OnEnter
+## AddonCompartmentFuncOnLeave: GLOBAL_TOTES_AddonCompartment_OnLeave
+## IconTexture: 2056011
+## SavedVariables: TOTES_OPTS
+## SavedVariablesPerCharacter: TOTES_COORDS
+## Notes: menu of emotes
+
+TotesEmotes-toc.xml

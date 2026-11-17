@@ -1,7 +1,7 @@
 ## Title: TotesEmotes
 ## Author: Scott Ingram
-## Version: 12.1.5
-## Interface: 120105, 120100, 120005, 120001, 120000
+## Version: 1215.1
+## Interface: 120105
 ## X-Category: Roleplay
 ## AddonCompartmentFunc: GLOBAL_TOTES_AddonCompartment_OnClick
 ## AddonCompartmentFuncOnEnter: GLOBAL_TOTES_AddonCompartment_OnEnter
@@ -11,29 +11,4 @@
 ## SavedVariablesPerCharacter: TOTES_COORDS
 ## Notes: menu of emotes
 
-libs\libs.xml
-
-ScottFreeWowLibs\Wormhole.lua
-ScottFreeWowLibs\Zebug.lua
-ScottFreeWowLibs\BlizApiEnums.lua
-ScottFreeWowLibs\BlizGlobalEventsListener.lua
-ScottFreeWowLibs\utilities.lua
-
-locales\index.xml
-
-utilities.lua
-constants.lua
-DB.lua
-Config.lua
-EmoteDefinitions.lua
-
-ui\KeyListenerMixin.lua
-ui\TheButton.lua
-ui\TheMenu.lua
-ui\TheMenu.xml
-ui\Navigator.lua
-
-TotesEmotes.lua
-
-# for GLOBAL_TOTES_AddonCompartment_*
-ScottFreeWowLibs\ExportToGlobal.lua
+TotesEmotes-toc.xml
